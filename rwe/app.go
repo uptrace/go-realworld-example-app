@@ -2,6 +2,7 @@ package rwe
 
 import (
 	"context"
+	mathRand "math/rand"
 	"os"
 	"os/signal"
 	"sync"
@@ -16,7 +17,7 @@ import (
 )
 
 var (
-	WaitGroup = new(sync.WaitGroup)
+	WaitGroup sync.WaitGroup
 	ExitCh    = make(chan struct{})
 	exiting   uint32
 )
@@ -42,6 +43,7 @@ func Init(ctx context.Context, cfg *xconfig.Config) context.Context {
 	}
 
 	rand.Seed(uint64(time.Now().UnixNano()))
+	mathRand.Seed(time.Now().UnixNano())
 
 	Config = cfg
 	Ctx = ctx
@@ -81,7 +83,7 @@ func Exit(ctx context.Context) {
 	}
 
 	close(ExitCh)
-	if waitTimeout(WaitGroup, 30*time.Second) {
+	if waitTimeout(&WaitGroup, 30*time.Second) {
 		logrus.WithContext(ctx).Info("waitTimeout")
 	}
 
