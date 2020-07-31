@@ -48,6 +48,8 @@ func Init(ctx context.Context, cfg *xconfig.Config) context.Context {
 	Config = cfg
 	Ctx = ctx
 
+	callOnInit(ctx)
+
 	return ctx
 }
 
