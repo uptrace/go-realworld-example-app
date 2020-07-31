@@ -2,7 +2,6 @@ package rwe
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/uptrace/go-realworld-example-app/httperror"
 )
 
 var (
@@ -23,8 +22,6 @@ func errorHandler(c *gin.Context) {
 	}
 
 	switch err := ginErr.Err.(type) {
-	case *httperror.Error:
-		c.JSON(err.Status, err)
 	default:
 		c.JSON(400, gin.H{
 			"error": err.Error(),
