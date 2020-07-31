@@ -11,9 +11,7 @@ func listUsers(c *gin.Context) {
 	if err := rwe.PGMain().
 		Model(&users).
 		Select(); err != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"error": err.Error(),
-		})
+		c.Error(err)
 		return
 	}
 
@@ -26,9 +24,7 @@ func showUser(c *gin.Context) {
 		Model(user).
 		Where("user_id = ?", c.Param("user_id")).
 		Select(); err != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"error": err.Error(),
-		})
+		c.Error(err)
 		return
 	}
 
@@ -42,9 +38,7 @@ func createUser(c *gin.Context) {
 	var err error
 	user.PasswordHash, err = hashPassword(user.PasswordHash)
 	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"error": err.Error(),
-		})
+		c.Error(err)
 		return
 	}
 
@@ -52,9 +46,7 @@ func createUser(c *gin.Context) {
 		Model(user).
 		Insert()
 	if err != nil {
-		c.AbortWithStatusJSON(400, gin.H{
-			"error": err.Error(),
-		})
+		c.Error(err)
 		return
 	}
 

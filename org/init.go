@@ -1,6 +1,8 @@
 package org
 
-import "github.com/uptrace/go-realworld-example-app/rwe"
+import (
+	"github.com/uptrace/go-realworld-example-app/rwe"
+)
 
 func init() {
 	rwe.API.GET("/users", listUsers)
