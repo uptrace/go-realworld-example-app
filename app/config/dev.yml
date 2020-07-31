@@ -1,0 +1,6 @@
+secret_key: "JeFvgCrMuvkoAJjkHgyaMDxku"
+
+pg_main:
+  addr: ":5432"
+  user: "postgres"
+  database: "real_world_dev"
