@@ -4,18 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"flag"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
 	"github.com/uptrace/go-realworld-example-app/xconfig"
 )
-
-var listenFlag = flag.String("listen", ":8888", "listen address")
 
 func TestOrg(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -33,72 +31,85 @@ func init() {
 	ctx = rwe.Init(ctx, cfg)
 }
 
+func newPOSTReq(url, data string, token string) *http.Request {
+	req, err := http.NewRequest("POST", url, bytes.NewBufferString(data))
+	Expect(err).NotTo(HaveOccurred())
+
+	req.Header.Set("Content-Type", "application/json")
+
+	if token != "" {
+		req.Header.Set("Authorization", "Token "+token)
+	}
+
+	return req
+}
+
+func processReq(req *http.Request, code int, v interface{}) {
+	w := httptest.NewRecorder()
+	rwe.Router.ServeHTTP(w, req)
+
+	Expect(w.Code).To(Equal(code))
+
+	err := json.Unmarshal(w.Body.Bytes(), v)
+	Expect(err).NotTo(HaveOccurred())
+}
+
 var _ = Describe("createUser", func() {
-	var w *httptest.ResponseRecorder
+	var resp struct{ User org.UserOut }
 
 	BeforeEach(func() {
 		rwe.PGMain().Exec("TRUNCATE users;")
 
 		data := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke"}`
-		req, err := http.NewRequest("POST", "/api/users", bytes.NewBufferString(data))
-		Expect(err).NotTo(HaveOccurred())
+		req := newPOSTReq("/api/users", data, "")
 
-		req.Header.Set("Content-Type", "application/json")
-
-		w = httptest.NewRecorder()
-		rwe.Router.ServeHTTP(w, req)
+		processReq(req, 200, &resp)
 	})
 
-	It("create new user", func() {
-		Expect(w.Code).To(Equal(200))
-		Expect(w.Body.String()).To(ContainSubstring(`"username":"wangzitian0","email":"wzt@gg.cn","bio":"","password":"jakejxke"}`))
+	It("creates new user", func() {
+		Expect(resp.User.Email).To(Equal("wzt@gg.cn"))
+		Expect(resp.User.Username).To(Equal("wangzitian0"))
+		Expect(resp.User.Bio).To(Equal(""))
+		Expect(resp.User.Image).To(Equal(""))
+		Expect(resp.User.Token).NotTo(BeEmpty())
 	})
 
 	Describe("loginUser", func() {
-		var resp struct {
-			User struct {
-				Email string `json:"email"`
-				Token string `json:"token"`
-			} `json:"user"`
-		}
+		var resp struct{ User org.UserOut }
+		var token string
 
 		BeforeEach(func() {
-			data := `{"email": "wzt@gg.cn","password": "jakejxke"}`
-			req, err := http.NewRequest("POST", "/api/users/login", bytes.NewBufferString(data))
-			Expect(err).NotTo(HaveOccurred())
+			data := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke"}`
+			req := newPOSTReq("/api/users", data, "")
 
-			req.Header.Set("Content-Type", "application/json")
-
-			w = httptest.NewRecorder()
-			rwe.Router.ServeHTTP(w, req)
-
-			Expect(w.Code).To(Equal(200))
-
-			err = json.Unmarshal(w.Body.Bytes(), &resp)
-			Expect(err).NotTo(HaveOccurred())
+			processReq(req, 200, &resp)
+			token = resp.User.Token
 		})
 
-		It("login user", func() {
+		It("returns user with JWT token", func() {
 			Expect(resp.User.Email).To(Equal("wzt@gg.cn"))
+			Expect(resp.User.Username).To(Equal("wangzitian0"))
+			Expect(resp.User.Bio).To(Equal(""))
+			Expect(resp.User.Image).To(Equal(""))
 			Expect(resp.User.Token).NotTo(BeEmpty())
 		})
 
 		Describe("currentUser", func() {
+			var resp struct{ User org.UserOut }
+
 			BeforeEach(func() {
-				req, err := http.NewRequest("POST", "/api/users/current", nil)
-				Expect(err).NotTo(HaveOccurred())
+				data := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke"}`
+				req := newPOSTReq("/api/users", data, "Token "+token)
 
-				var bearer = "TOKEN " + resp.User.Token
-				req.Header.Set("Authorization", bearer)
-				req.Header.Set("Content-Type", "application/json")
-
-				w = httptest.NewRecorder()
-				rwe.Router.ServeHTTP(w, req)
+				processReq(req, 200, &resp)
 			})
 
-			It("returns logined user", func() {
-				Expect(w.Code).To(Equal(200))
-				Expect(w.Body.String()).To(ContainSubstring(`"username":"wangzitian0"`))
+			It("returns logged in user", func() {
+				Expect(resp.User.Email).To(Equal("wzt@gg.cn"))
+				Expect(resp.User.Username).To(Equal("wangzitian0"))
+				Expect(resp.User.Bio).To(Equal(""))
+				Expect(resp.User.Image).To(Equal(""))
+				Expect(resp.User.Token).NotTo(BeEmpty())
 			})
 		})
 	})

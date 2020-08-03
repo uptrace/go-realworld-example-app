@@ -1,23 +1,27 @@
 package org
 
-import "github.com/uptrace/go-realworld-example-app/rwe"
+import (
+	"context"
+
+	"github.com/uptrace/go-realworld-example-app/rwe"
+)
 
 type User struct {
 	tableName struct{} `pg:",alias:u"`
 
-	ID       uint64 `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Bio      string `json:"bio"`
-	// Image        *string `json:"image"`
-	Password     string `json:"password" pg:"-"`
-	PasswordHash string `json:"-"`
+	ID           uint64
+	Username     string
+	Email        string
+	Bio          string
+	Image        string `pg:"img"`
+	Password     string `pg:"-"`
+	PasswordHash string
 }
 
-func SelectUser(id uint64) (*User, error) {
+func SelectUser(ctx context.Context, id uint64) (*User, error) {
 	user := new(User)
 	if err := rwe.PGMain().
-		Model(user).
+		ModelContext(ctx, user).
 		Where("id = ?", id).
 		Select(); err != nil {
 		return nil, err

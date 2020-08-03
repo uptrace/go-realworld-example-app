@@ -2,7 +2,7 @@ package org
 
 import (
 	"errors"
-	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-pg/pg/v10"
@@ -13,27 +13,44 @@ import (
 
 var errUserNotFound = errors.New("Not Registered email or invalid password")
 
-func listUsers(c *gin.Context) {
-	var users []User
-	if err := rwe.PGMain().
-		Model(&users).
-		Select(); err != nil {
+type UserOut struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Bio      string `json:"bio"`
+	Image    string `json:"image"`
+	Token    string `json:"token"`
+}
+
+func newUserOut(user *User) (*UserOut, error) {
+	token, err := createUserToken(user.ID, 24*time.Hour)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserOut{
+		Username: user.Username,
+		Email:    user.Email,
+		Bio:      user.Bio,
+		Image:    user.Image,
+		Token:    token,
+	}, nil
+}
+
+func currentUser(c *gin.Context) {
+	user, _ := c.Get("user")
+
+	userOut, err := newUserOut(user.(*User))
+	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	c.JSON(200, gin.H{"users": users})
-}
-
-func currentUser(c *gin.Context) {
-	user := c.MustGet("user").(*User)
-	c.JSON(200, gin.H{"users": user})
+	c.JSON(200, gin.H{"user": userOut})
 }
 
 func createUser(c *gin.Context) {
 	user := new(User)
 	if err := c.BindJSON(user); err != nil {
-		c.Error(err)
 		return
 	}
 
@@ -52,7 +69,13 @@ func createUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"user": user})
+	userOut, err := newUserOut(user)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"user": userOut})
 }
 
 func hashPassword(pass string) (string, error) {
@@ -64,13 +87,15 @@ func hashPassword(pass string) (string, error) {
 }
 
 func loginUser(c *gin.Context) {
-	user := new(User)
 	var in struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-	err := c.BindJSON(&in)
+	if err := c.BindJSON(&in); err != nil {
+		return
+	}
 
+	user := new(User)
 	if err := rwe.PGMain().
 		Model(user).
 		Where("email = ?", in.Email).
@@ -83,22 +108,18 @@ func loginUser(c *gin.Context) {
 		return
 	}
 
-	if err = comparePasswords(user.PasswordHash, in.Password); err != nil {
+	if err := comparePasswords(user.PasswordHash, in.Password); err != nil {
 		c.Error(err)
 		return
 	}
 
-	UpdateContextUserModel(c, user.ID)
-
-	var out struct {
-		Email string `json:"email"`
-		Token string `json:"token"`
+	userOut, err := newUserOut(user)
+	if err != nil {
+		c.Error(err)
+		return
 	}
 
-	out.Email = user.Email
-	out.Token = newToken(user.ID)
-
-	c.JSON(http.StatusOK, gin.H{"user": out})
+	c.JSON(200, gin.H{"user": userOut})
 }
 
 func comparePasswords(hash, pass string) error {
