@@ -24,6 +24,8 @@ type Config struct {
 	Uptrace struct {
 		DSN string `yaml:"dsn"`
 	}
+
+	SecretKey string `yaml:"secret_key"`
 }
 
 func LoadConfig(service string) (*Config, error) {
