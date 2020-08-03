@@ -9,8 +9,6 @@ import (
 	"github.com/uptrace/go-realworld-example-app/rwe"
 )
 
-// var errTokenEmpty = errors.New("token is missing or empty")
-
 func decodeUserToken(jwtToken string) (uint64, error) {
 	if len(jwtToken) == 0 {
 		return 0, errors.New("token is missing or empty")
@@ -47,15 +45,3 @@ func createUserToken(userID uint64, ttl time.Duration) (string, error) {
 	key := []byte(rwe.Config.SecretKey)
 	return token.SignedString(key)
 }
-
-// // -----------------------
-// func newToken(id uint64) string {
-// 	jwt_token := jwt.New(jwt.GetSigningMethod("HS256"))
-// 	jwt_token.Claims = jwt.MapClaims{
-// 		"id":  id,
-// 		"exp": time.Now().Add(time.Hour * 24).Unix(),
-// 	}
-
-// 	token, _ := jwt_token.SignedString([]byte(rwe.Config.SecretKey))
-// 	return token
-// }
