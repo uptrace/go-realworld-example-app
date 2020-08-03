@@ -97,7 +97,7 @@ func loginUser(c *gin.Context) {
 
 	user := new(User)
 	if err := rwe.PGMain().
-		Model(user).
+		ModelContext(c.Request.Context(), user).
 		Where("email = ?", in.Email).
 		Select(); err != nil {
 		if err == pg.ErrNoRows {
