@@ -36,7 +36,6 @@ func newPOSTReq(url, data string, token string) *http.Request {
 	Expect(err).NotTo(HaveOccurred())
 
 	req.Header.Set("Content-Type", "application/json")
-
 	if token != "" {
 		req.Header.Set("Authorization", "Token "+token)
 	}
