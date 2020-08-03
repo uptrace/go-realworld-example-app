@@ -10,11 +10,8 @@ import (
 func authToken(req *http.Request) string {
 	const prefix = "Token "
 	v := req.Header.Get("Authorization")
-	if strings.HasPrefix(v, prefix) {
-		return v[len(prefix):]
-	}
-
-	return ""
+	v = strings.TrimPrefix(v, prefix)
+	return v
 }
 
 func AuthMiddleware(c *gin.Context) {
@@ -25,7 +22,7 @@ func AuthMiddleware(c *gin.Context) {
 		return
 	}
 
-	user, err := SelectUser(c.Request.Context(), userID)
+	user, err := SelectUser(c, userID)
 	if err != nil {
 		c.AbortWithError(http.StatusUnauthorized, err)
 		return

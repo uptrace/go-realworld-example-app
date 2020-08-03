@@ -32,7 +32,6 @@ func main() {
 
 	var handler http.Handler
 	handler = rwe.Router
-	handler = httputil.ContextHandler{Ctx: ctx, Next: handler}
 	handler = httputil.PanicHandler{Next: handler}
 
 	logrus.WithContext(ctx).
