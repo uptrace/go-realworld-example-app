@@ -9,5 +9,8 @@ func init() {
 	rwe.API.POST("/users/login", loginUser)
 
 	rwe.API.Use(AuthMiddleware)
-	rwe.API.POST("/user", currentUser)
+	rwe.API.GET("/user", currentUser)
+	rwe.API.PUT("/users", updateUser)
+
+	rwe.API.POST("/articles", createArticle)
 }

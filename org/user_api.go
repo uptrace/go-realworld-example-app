@@ -13,39 +13,26 @@ import (
 
 var errUserNotFound = errors.New("Not Registered email or invalid password")
 
-type UserOut struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Bio      string `json:"bio"`
-	Image    string `json:"image"`
-	Token    string `json:"token"`
-}
-
-func newUserOut(user *User) (*UserOut, error) {
+func setUserToken(user *User) (*User, error) {
 	token, err := createUserToken(user.ID, 24*time.Hour)
 	if err != nil {
 		return nil, err
 	}
 
-	return &UserOut{
-		Username: user.Username,
-		Email:    user.Email,
-		Bio:      user.Bio,
-		Image:    user.Image,
-		Token:    token,
-	}, nil
+	user.Token = token
+	return user, nil
 }
 
 func currentUser(c *gin.Context) {
 	user, _ := c.Get("user")
 
-	userOut, err := newUserOut(user.(*User))
+	user, err := setUserToken(user.(*User))
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	c.JSON(200, gin.H{"user": userOut})
+	c.JSON(200, gin.H{"user": user})
 }
 
 func createUser(c *gin.Context) {
@@ -61,21 +48,21 @@ func createUser(c *gin.Context) {
 		return
 	}
 
-	_, err = rwe.PGMain().
-		Model(user).
-		Insert()
+	if _, err = rwe.PGMain().
+		ModelContext(c, user).
+		Insert(); err != nil {
+		c.Error(err)
+		return
+	}
+
+	user, err = setUserToken(user)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	userOut, err := newUserOut(user)
-	if err != nil {
-		c.Error(err)
-		return
-	}
-
-	c.JSON(200, gin.H{"user": userOut})
+	user.Password = ""
+	c.JSON(200, gin.H{"user": user})
 }
 
 func hashPassword(pass string) (string, error) {
@@ -113,13 +100,13 @@ func loginUser(c *gin.Context) {
 		return
 	}
 
-	userOut, err := newUserOut(user)
+	user, err := setUserToken(user)
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	c.JSON(200, gin.H{"user": userOut})
+	c.JSON(200, gin.H{"user": user})
 }
 
 func comparePasswords(hash, pass string) error {
@@ -128,4 +115,41 @@ func comparePasswords(hash, pass string) error {
 		return errUserNotFound
 	}
 	return nil
+}
+
+func updateUser(c *gin.Context) {
+	user := new(User)
+	if err := c.BindJSON(user); err != nil {
+		return
+	}
+
+	var err error
+	user.PasswordHash, err = hashPassword(user.Password)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	authUser, _ := c.Get("user")
+	if _, err = rwe.PGMain().
+		ModelContext(c, user).
+		Set("email = ?", user.Email).
+		Set("username = ?", user.Username).
+		Set("password_hash = ?", user.PasswordHash).
+		Set("image = ?", user.Image).
+		Set("bio = ?", user.Bio).
+		Where("id = ?", authUser.(*User).ID).
+		Update(); err != nil {
+		c.Error(err)
+		return
+	}
+
+	user, err = setUserToken(user)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	user.Password = ""
+	c.JSON(200, gin.H{"user": user})
 }

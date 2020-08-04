@@ -1,11 +1,7 @@
 package org_test
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -31,36 +27,14 @@ func init() {
 	ctx = rwe.Init(ctx, cfg)
 }
 
-func newPOSTReq(url, data string, token string) *http.Request {
-	req, err := http.NewRequest("POST", url, bytes.NewBufferString(data))
-	Expect(err).NotTo(HaveOccurred())
-
-	req.Header.Set("Content-Type", "application/json")
-	if token != "" {
-		req.Header.Set("Authorization", "Token "+token)
-	}
-
-	return req
-}
-
-func processReq(req *http.Request, code int, v interface{}) {
-	w := httptest.NewRecorder()
-	rwe.Router.ServeHTTP(w, req)
-
-	Expect(w.Code).To(Equal(code))
-
-	err := json.Unmarshal(w.Body.Bytes(), v)
-	Expect(err).NotTo(HaveOccurred())
-}
-
 var _ = Describe("createUser", func() {
-	var resp struct{ User org.UserOut }
+	var resp struct{ User org.User }
 
 	BeforeEach(func() {
 		rwe.PGMain().Exec("TRUNCATE users;")
 
-		data := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke"}`
-		req := newPOSTReq("/api/users", data, "")
+		data := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke", "image": "img"}`
+		req := newReq("POST", "/api/users", data)
 
 		processReq(req, 200, &resp)
 	})
@@ -69,17 +43,17 @@ var _ = Describe("createUser", func() {
 		Expect(resp.User.Email).To(Equal("wzt@gg.cn"))
 		Expect(resp.User.Username).To(Equal("wangzitian0"))
 		Expect(resp.User.Bio).To(Equal(""))
-		Expect(resp.User.Image).To(Equal(""))
+		Expect(resp.User.Image).To(Equal("img"))
 		Expect(resp.User.Token).NotTo(BeEmpty())
 	})
 
 	Describe("loginUser", func() {
-		var resp struct{ User org.UserOut }
+		var resp struct{ User org.User }
 		var token string
 
 		BeforeEach(func() {
 			data := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke"}`
-			req := newPOSTReq("/api/users", data, "")
+			req := newReq("POST", "/api/users", data)
 
 			processReq(req, 200, &resp)
 			token = resp.User.Token
@@ -94,18 +68,36 @@ var _ = Describe("createUser", func() {
 		})
 
 		Describe("currentUser", func() {
-			var resp struct{ User org.UserOut }
+			var resp struct{ User org.User }
 
 			BeforeEach(func() {
-				data := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke"}`
-				req := newPOSTReq("/api/users", data, "Token "+token)
-
+				req := newReqWithToken("GET", "/api/user", "", token)
 				processReq(req, 200, &resp)
 			})
 
 			It("returns logged in user", func() {
 				Expect(resp.User.Email).To(Equal("wzt@gg.cn"))
 				Expect(resp.User.Username).To(Equal("wangzitian0"))
+				Expect(resp.User.Bio).To(Equal(""))
+				Expect(resp.User.Image).To(Equal(""))
+				Expect(resp.User.Token).NotTo(BeEmpty())
+			})
+		})
+
+		Describe("updateUser", func() {
+			var resp struct{ User org.User }
+
+			BeforeEach(func() {
+				token := "fix"
+				data := `{"username": "hello","email": "foo@bar.com"}`
+				req := newReqWithToken("PUT", "/api/users", data, token)
+
+				processReq(req, 200, &resp)
+			})
+
+			FIt("returns updated user", func() {
+				Expect(resp.User.Email).To(Equal("foo@bar.com"))
+				Expect(resp.User.Username).To(Equal("hello"))
 				Expect(resp.User.Bio).To(Equal(""))
 				Expect(resp.User.Image).To(Equal(""))
 				Expect(resp.User.Token).NotTo(BeEmpty())
