@@ -27,19 +27,18 @@ func init() {
 	ctx = rwe.Init(ctx, cfg)
 }
 
+func assertUser(user map[string]interface{}) {
+	Expect(user).To(MatchAllKeys(Keys{
+		"username": Equal("wangzitian0"),
+		"email":    Equal("wzt@gg.cn"),
+		"bio":      Equal("bar"),
+		"image":    Equal("img"),
+		"token":    Not(BeEmpty()),
+	}))
+}
+
 var _ = Describe("createUser", func() {
 	var resp map[string]interface{}
-
-	var checkUserResp = func(resp map[string]interface{}) {
-		user := resp["user"].(map[string]interface{})
-		Expect(user).To(MatchAllKeys(Keys{
-			"username": Equal("wangzitian0"),
-			"email":    Equal("wzt@gg.cn"),
-			"bio":      Equal("bar"),
-			"image":    Equal("img"),
-			"token":    Not(BeEmpty()),
-		}))
-	}
 
 	BeforeEach(func() {
 		rwe.PGMain().Exec("TRUNCATE users;")
@@ -51,7 +50,7 @@ var _ = Describe("createUser", func() {
 	})
 
 	It("creates new user", func() {
-		checkUserResp(resp)
+		assertUser(resp["user"].(map[string]interface{}))
 	})
 
 	Describe("loginUser", func() {
@@ -67,7 +66,7 @@ var _ = Describe("createUser", func() {
 		})
 
 		It("returns user with JWT token", func() {
-			checkUserResp(resp)
+			assertUser(resp["user"].(map[string]interface{}))
 		})
 
 		Describe("currentUser", func() {
@@ -80,7 +79,7 @@ var _ = Describe("createUser", func() {
 			})
 
 			It("returns logged in user", func() {
-				checkUserResp(resp)
+				assertUser(resp["user"].(map[string]interface{}))
 			})
 		})
 

@@ -32,6 +32,7 @@ func AuthMiddleware(c *gin.Context) {
 	user.Token, err = CreateUserToken(user.ID, 24*time.Hour)
 	if err != nil {
 		c.AbortWithError(http.StatusUnauthorized, err)
+		return
 	}
 
 	c.Set("user", user)
