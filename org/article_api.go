@@ -14,7 +14,6 @@ func createArticle(c *gin.Context) {
 	}
 
 	article.AuthorID = user.ID
-
 	if _, err := rwe.PGMain().
 		ModelContext(c, article).
 		Insert(); err != nil {
