@@ -35,7 +35,7 @@ func decodeUserToken(jwtToken string) (uint64, error) {
 	return id, nil
 }
 
-func createUserToken(userID uint64, ttl time.Duration) (string, error) {
+func CreateUserToken(userID uint64, ttl time.Duration) (string, error) {
 	claims := &jwt.StandardClaims{
 		Subject:   strconv.FormatUint(userID, 10),
 		ExpiresAt: time.Now().Add(ttl).Unix(),
