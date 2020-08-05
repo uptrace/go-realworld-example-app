@@ -13,25 +13,18 @@ import (
 
 var errUserNotFound = errors.New("Not Registered email or invalid password")
 
-func setUserToken(user *User) (*User, error) {
-	token, err := createUserToken(user.ID, 24*time.Hour)
+func setUserToken(user *User) error {
+	token, err := CreateUserToken(user.ID, 24*time.Hour)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	user.Token = token
-	return user, nil
+	return nil
 }
 
 func currentUser(c *gin.Context) {
-	user, _ := c.Get("user")
-
-	user, err := setUserToken(user.(*User))
-	if err != nil {
-		c.Error(err)
-		return
-	}
-
+	user := c.MustGet("user").(*User)
 	c.JSON(200, gin.H{"user": user})
 }
 
@@ -55,8 +48,7 @@ func createUser(c *gin.Context) {
 		return
 	}
 
-	user, err = setUserToken(user)
-	if err != nil {
+	if err = setUserToken(user); err != nil {
 		c.Error(err)
 		return
 	}
@@ -100,7 +92,7 @@ func loginUser(c *gin.Context) {
 		return
 	}
 
-	user, err := setUserToken(user)
+	err := setUserToken(user)
 	if err != nil {
 		c.Error(err)
 		return
@@ -130,26 +122,21 @@ func updateUser(c *gin.Context) {
 		return
 	}
 
-	authUser, _ := c.Get("user")
+	authUser, _ := c.MustGet("user").(*User)
 	if _, err = rwe.PGMain().
-		ModelContext(c, user).
+		ModelContext(c, authUser).
 		Set("email = ?", user.Email).
 		Set("username = ?", user.Username).
 		Set("password_hash = ?", user.PasswordHash).
 		Set("image = ?", user.Image).
 		Set("bio = ?", user.Bio).
-		Where("id = ?", authUser.(*User).ID).
+		Where("id = ?", authUser.ID).
+		Returning("*").
 		Update(); err != nil {
 		c.Error(err)
 		return
 	}
 
-	user, err = setUserToken(user)
-	if err != nil {
-		c.Error(err)
-		return
-	}
-
 	user.Password = ""
-	c.JSON(200, gin.H{"user": user})
+	c.JSON(200, gin.H{"user": authUser})
 }

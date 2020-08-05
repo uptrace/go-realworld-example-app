@@ -4,8 +4,7 @@ CREATE TABLE users (
   email varchar(500) NOT NULL,
   bio varchar(500),
   image varchar(500),
-  password_hash varchar(500) NOT NULL,
-  email_confirmed boolean
+  password_hash varchar(500) NOT NULL
 );
 
 --gopg:split
@@ -19,7 +18,7 @@ CREATE TABLE articles (
   author_id int8,
 
   created_at timestamptz NOT NULL DEFAULT now(),
-  deleted_at timestamptz
+  updated_at timestamptz
 );
 
 CREATE TABLE article_tags (
@@ -28,4 +27,4 @@ CREATE TABLE article_tags (
 );
 
 CREATE UNIQUE INDEX article_tags_article_id_tag_idx
-ON subscriptions (article_id, tag);
+ON article_tags (article_id, tag);

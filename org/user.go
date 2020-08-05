@@ -15,8 +15,8 @@ type User struct {
 	Bio          string `json:"bio"`
 	Image        string `json:"image"`
 	Password     string `pg:"-" json:"password,omitempty"`
-	Token        string `pg:"-" json:"token,omitempty"`
 	PasswordHash string `json:"-"`
+	Token        string `pg:"-" json:"token,omitempty"`
 }
 
 func SelectUser(ctx context.Context, id uint64) (*User, error) {

@@ -3,6 +3,7 @@ package org
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,6 +27,11 @@ func AuthMiddleware(c *gin.Context) {
 	if err != nil {
 		c.AbortWithError(http.StatusUnauthorized, err)
 		return
+	}
+
+	user.Token, err = CreateUserToken(user.ID, 24*time.Hour)
+	if err != nil {
+		c.AbortWithError(http.StatusUnauthorized, err)
 	}
 
 	c.Set("user", user)

@@ -5,14 +5,21 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"time"
+
+	"github.com/uptrace/go-realworld-example-app/org"
 
 	"github.com/uptrace/go-realworld-example-app/rwe"
 
 	. "github.com/onsi/gomega"
 )
 
-func newReqWithToken(method, url, data, token string) *http.Request {
+func newReqWithToken(method, url, data string, userID uint64) *http.Request {
 	req := newReq(method, url, data)
+
+	token, err := org.CreateUserToken(userID, time.Hour)
+	Expect(err).NotTo(HaveOccurred())
+
 	req.Header.Set("Authorization", "Token "+token)
 	return req
 }

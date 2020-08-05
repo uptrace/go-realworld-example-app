@@ -6,8 +6,7 @@ import (
 )
 
 func createArticle(c *gin.Context) {
-	u, _ := c.Get("user")
-	user := u.(*User)
+	user, _ := c.MustGet("user").(*User)
 
 	article := new(Article)
 	if err := c.BindJSON(article); err != nil {
@@ -32,7 +31,7 @@ func createArticle(c *gin.Context) {
 	}
 
 	if _, err := rwe.PGMain().
-		ModelContext(c, tags).
+		ModelContext(c, &tags).
 		Insert(); err != nil {
 		c.Error(err)
 		return
