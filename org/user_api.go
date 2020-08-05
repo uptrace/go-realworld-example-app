@@ -122,7 +122,7 @@ func updateUser(c *gin.Context) {
 		return
 	}
 
-	authUser, _ := c.MustGet("user").(*User)
+	authUser := c.MustGet("user").(*User)
 	if _, err = rwe.PGMain().
 		ModelContext(c, authUser).
 		Set("email = ?", user.Email).

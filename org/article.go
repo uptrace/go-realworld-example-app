@@ -3,14 +3,16 @@ package org
 import "time"
 
 type Article struct {
+	tableName struct{} `pg:"articles,alias:a"`
+
 	ID          uint64 `json:"-"`
 	Slug        string `json:"slug"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Body        string `json:"body"`
 
-	Author   Author `json:"author" pg:"-"`
-	AuthorID uint64 `json:"-"`
+	Author   *Author `json:"author" pg:"-"`
+	AuthorID uint64  `json:"-"`
 
 	TagList []string `json:"tagList" pg:"-,array"`
 

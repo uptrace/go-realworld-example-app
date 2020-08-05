@@ -35,7 +35,7 @@ var _ = Describe("createArticle", func() {
 		rwe.PGMain().Exec("TRUNCATE articles;")
 		rwe.PGMain().Exec("TRUNCATE article_tags;")
 
-		data := `{"title": "How to train your dragon", "description": "Ever wonder how?", "body": "You have to believe", "tagList": ["reactjs", "angularjs", "dragons"]}`
+		data := `{"slug": "how-to-train-your-dragon", "title": "How to train your dragon", "description": "Ever wonder how?", "body": "You have to believe", "tagList": ["reactjs", "angularjs", "dragons"]}`
 
 		req := newReqWithToken("POST", "/api/articles", data, user.ID)
 
@@ -53,7 +53,7 @@ var _ = Describe("createArticle", func() {
 			"tagList":        Equal([]interface{}{"reactjs", "angularjs", "dragons"}),
 			"favoritesCount": Equal(float64(0)),
 			"favorited":      Equal(false),
-			"slug":           Equal(""),
+			"slug":           Equal("how-to-train-your-dragon"),
 			"title":          Equal("How to train your dragon"),
 			"updatedAt":      Equal("0001-01-01T00:00:00Z"),
 		}))

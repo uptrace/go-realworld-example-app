@@ -6,7 +6,7 @@ import (
 )
 
 func createArticle(c *gin.Context) {
-	user, _ := c.MustGet("user").(*User)
+	user := c.MustGet("user").(*User)
 
 	article := new(Article)
 	if err := c.BindJSON(article); err != nil {
@@ -37,7 +37,7 @@ func createArticle(c *gin.Context) {
 		return
 	}
 
-	article.Author = Author{
+	article.Author = &Author{
 		Username:  user.Username,
 		Bio:       user.Bio,
 		Image:     user.Image,
