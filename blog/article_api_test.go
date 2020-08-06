@@ -115,7 +115,7 @@ var _ = Describe("createArticle", func() {
 		})
 	})
 
-	FDescribe("listArticles", func() {
+	Describe("listArticles", func() {
 		BeforeEach(func() {
 			req := NewReq("GET", "/api/articles", "")
 			ProcessReq(req, 200, &resp)

@@ -62,7 +62,7 @@ func NewPostgres(cfg *xconfig.Postgres, usePool bool) *pg.DB {
 
 	db.AddQueryHook(pgext.OpenTelemetryHook{})
 	if IsDebug() {
-		db.AddQueryHook(pgext.DebugHook{})
+		// db.AddQueryHook(pgext.DebugHook{})
 	}
 
 	return db

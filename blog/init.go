@@ -6,10 +6,12 @@ import (
 )
 
 func init() {
-	rwe.API.GET("/articles", listArticles)
-	rwe.API.GET("/articles/:slug", showArticle)
+	g := rwe.API.Group("")
 
-	rwe.API.Use(org.AuthMiddleware)
+	g.GET("/articles", listArticles)
+	g.GET("/articles/:slug", showArticle)
 
-	rwe.API.POST("/articles", createArticle)
+	g.Use(org.AuthMiddleware)
+
+	g.POST("/articles", createArticle)
 }
