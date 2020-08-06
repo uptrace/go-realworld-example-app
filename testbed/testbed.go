@@ -1,4 +1,4 @@
-package org_test
+package testbed
 
 import (
 	"bytes"
@@ -8,14 +8,13 @@ import (
 	"time"
 
 	"github.com/uptrace/go-realworld-example-app/org"
-
 	"github.com/uptrace/go-realworld-example-app/rwe"
 
 	. "github.com/onsi/gomega"
 )
 
-func newReqWithToken(method, url, data string, userID uint64) *http.Request {
-	req := newReq(method, url, data)
+func NewReqWithToken(method, url, data string, userID uint64) *http.Request {
+	req := NewReq(method, url, data)
 
 	token, err := org.CreateUserToken(userID, time.Hour)
 	Expect(err).NotTo(HaveOccurred())
@@ -24,7 +23,7 @@ func newReqWithToken(method, url, data string, userID uint64) *http.Request {
 	return req
 }
 
-func newReq(method, url, data string) *http.Request {
+func NewReq(method, url, data string) *http.Request {
 	req, err := http.NewRequest(method, url, bytes.NewBufferString(data))
 	Expect(err).NotTo(HaveOccurred())
 
@@ -33,7 +32,7 @@ func newReq(method, url, data string) *http.Request {
 	return req
 }
 
-func processReq(req *http.Request, code int, v interface{}) {
+func ProcessReq(req *http.Request, code int, v interface{}) {
 	w := httptest.NewRecorder()
 	rwe.Router.ServeHTTP(w, req)
 

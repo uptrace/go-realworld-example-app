@@ -1,16 +1,36 @@
-package org_test
+package blog_test
 
 import (
+	"context"
 	"fmt"
+	"testing"
 	"time"
 
 	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
+	. "github.com/uptrace/go-realworld-example-app/testbed"
+	"github.com/uptrace/go-realworld-example-app/xconfig"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
 )
+
+func TestGinkgo(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "blog")
+}
+
+func init() {
+	ctx := context.Background()
+
+	cfg, err := xconfig.LoadConfig("test")
+	if err != nil {
+		panic(err)
+	}
+
+	ctx = rwe.Init(ctx, cfg)
+}
 
 func assertArticle(article map[string]interface{}) {
 	Expect(article).To(MatchAllKeys(Keys{
@@ -26,15 +46,15 @@ func assertArticle(article map[string]interface{}) {
 	}))
 }
 
-var _ = FDescribe("createArticle", func() {
+var _ = Describe("createArticle", func() {
 	var resp map[string]interface{}
 	var slug string
 
-	var checkTime = func(article map[string]interface{}, key string, expectedTime time.Time) {
+	checkTime := func(article map[string]interface{}, key string, expectedTime time.Time) {
 		tm, err := time.Parse(time.RFC3339, article[key].(string))
 		Expect(err).NotTo(HaveOccurred())
 
-		Expect(tm).To(BeTemporally("~", expectedTime, time.Second))
+		ExpectWithOffset(1, tm).To(BeTemporally("~", expectedTime, time.Second))
 		delete(article, key)
 	}
 
@@ -54,9 +74,9 @@ var _ = FDescribe("createArticle", func() {
 
 		data := `{"slug": "how-to-train-your-dragon", "title": "How to train your dragon", "description": "Ever wonder how?", "body": "You have to believe", "tagList": ["reactjs", "angularjs", "dragons"]}`
 
-		req := newReqWithToken("POST", "/api/articles", data, user.ID)
+		req := NewReqWithToken("POST", "/api/articles", data, user.ID)
 
-		processReq(req, 200, &resp)
+		ProcessReq(req, 200, &resp)
 
 		slug = resp["article"].(map[string]interface{})["slug"].(string)
 	})
@@ -83,8 +103,8 @@ var _ = FDescribe("createArticle", func() {
 	Describe("showArticle", func() {
 		BeforeEach(func() {
 			url := fmt.Sprintf("/api/articles/%s", slug)
-			req := newReq("GET", url, "")
-			processReq(req, 200, &resp)
+			req := NewReq("GET", url, "")
+			ProcessReq(req, 200, &resp)
 		})
 
 		It("returns article", func() {
@@ -95,13 +115,13 @@ var _ = FDescribe("createArticle", func() {
 		})
 	})
 
-	Describe("listArticles", func() {
+	FDescribe("listArticles", func() {
 		BeforeEach(func() {
-			req := newReq("GET", "/api/articles", "")
-			processReq(req, 200, &resp)
+			req := NewReq("GET", "/api/articles", "")
+			ProcessReq(req, 200, &resp)
 		})
 
-		FIt("returns articles", func() {
+		It("returns articles", func() {
 			articles := resp["articles"].([]interface{})
 			article := articles[0].(map[string]interface{})
 			checkTime(article, "createdAt", time.Now())
