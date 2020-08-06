@@ -1,6 +1,8 @@
-package org
+package blog
 
-import "time"
+import (
+	"time"
+)
 
 type Article struct {
 	tableName struct{} `pg:"articles,alias:a"`
@@ -11,10 +13,11 @@ type Article struct {
 	Description string `json:"description"`
 	Body        string `json:"body"`
 
-	Author   *Author `json:"author" pg:"-"`
+	Author   *Author `json:"author"`
 	AuthorID uint64  `json:"-"`
 
-	TagList []string `json:"tagList" pg:"-,array"`
+	Tags    []ArticleTag `json:"-"`
+	TagList []string     `json:"tagList" pg:"-,array"`
 
 	Favorited      bool `json:"favorited" pg:"-"`
 	FavoritesCount int  `json:"favoritesCount" pg:"-"`
@@ -24,13 +27,18 @@ type Article struct {
 }
 
 type Author struct {
+	tableName struct{} `pg:"users,alias:u"`
+
+	ID        uint64 `json:"-"`
 	Username  string `json:"username"`
 	Bio       string `json:"bio"`
 	Image     string `json:"image"`
-	Following bool   `json:"following"`
+	Following bool   `json:"following" pg:"-"`
 }
 
 type ArticleTag struct {
+	tableName struct{} `pg:"alias:t"`
+
 	ArticleID uint64
 	Tag       string
 }

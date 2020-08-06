@@ -5,12 +5,13 @@ import (
 )
 
 func init() {
-	rwe.API.POST("/users", createUser)
-	rwe.API.POST("/users/login", loginUser)
+	g := rwe.API.Group("")
 
-	rwe.API.Use(AuthMiddleware)
-	rwe.API.GET("/user", currentUser)
-	rwe.API.PUT("/users", updateUser)
+	g.POST("/users", createUser)
+	g.POST("/users/login", loginUser)
 
-	rwe.API.POST("/articles", createArticle)
+	g.Use(AuthMiddleware)
+
+	g.GET("/user", currentUser)
+	g.PUT("/users", updateUser)
 }

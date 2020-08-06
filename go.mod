@@ -8,6 +8,8 @@ require (
 	github.com/go-pg/migrations/v8 v8.0.0-beta.1
 	github.com/go-pg/pg v8.0.7+incompatible
 	github.com/go-pg/pg/v10 v10.0.0-beta.8
+	github.com/go-pg/urlstruct v0.5.0
+	github.com/gosimple/slug v1.9.0
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.10.1
 	github.com/onsi/gomega v1.7.0

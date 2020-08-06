@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/uptrace/go-realworld-example-app/rwe"
+	"github.com/uptrace/go-realworld-example-app/xconfig"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
-	"github.com/uptrace/go-realworld-example-app/rwe"
-	"github.com/uptrace/go-realworld-example-app/xconfig"
 )
 
 func TestOrg(t *testing.T) {
