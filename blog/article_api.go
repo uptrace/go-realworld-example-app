@@ -24,13 +24,19 @@ func newSlug(title string) string {
 }
 
 func listArticles(c *gin.Context) {
-	f := &ArticleFilter{
-		Tag:       c.Query("tag"),
-		Author:    c.Query("author"),
-		Favorited: c.Query("favorited"),
+	f, err := decodeArticleFilter(c)
+	if err != nil {
+		c.Error(err)
+		return
 	}
 
-	articles, err := SelectArticles(c, f)
+	articles := make([]*Article, 0)
+	err := rwe.PGMain().ModelContext(c, &articles).
+		ColumnExpr("?TableColumns").
+		Apply(f.query).
+		Limit(f.Pager.GetLimit()).
+		Offset(f.Pager.GetOffset()).
+		Select()
 	if err != nil {
 		c.Error(err)
 		return
@@ -40,8 +46,19 @@ func listArticles(c *gin.Context) {
 }
 
 func showArticle(c *gin.Context) {
-	article, err := SelectArticle(c, c.Param("slug"))
+	f, err := decodeArticleFilter(c)
 	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	article := new(Article)
+	if err := rwe.PGMain().
+		ModelContext(c, article).
+		ColumnExpr("?TableColumns").
+		Apply(f.query).
+		Where("slug = ?", slug).
+		Select(); err != nil {
 		c.Error(err)
 		return
 	}
