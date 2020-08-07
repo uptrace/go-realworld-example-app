@@ -34,7 +34,7 @@ func init() {
 	ctx = rwe.Init(ctx, cfg)
 }
 
-var _ = FDescribe("createArticle", func() {
+var _ = Describe("createArticle", func() {
 	var resp map[string]interface{}
 	var slug string
 	var user *org.User
@@ -69,7 +69,9 @@ var _ = FDescribe("createArticle", func() {
 			Email:        "foo@bar.com",
 			PasswordHash: "hash",
 		}
+	})
 
+	BeforeEach(func() {
 		_, err := rwe.PGMain().Model(user).Insert()
 		Expect(err).NotTo(HaveOccurred())
 
