@@ -15,25 +15,35 @@ func authToken(req *http.Request) string {
 	return v
 }
 
-func AuthMiddleware(c *gin.Context) {
+func UserMiddleware(c *gin.Context) {
 	token := authToken(c.Request)
 	userID, err := decodeUserToken(token)
 	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
+		c.Set("authErr", err)
 		return
 	}
 
 	user, err := SelectUser(c, userID)
 	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
+		c.Set("authErr", err)
 		return
 	}
 
 	user.Token, err = CreateUserToken(user.ID, 24*time.Hour)
 	if err != nil {
-		c.AbortWithError(http.StatusUnauthorized, err)
+		c.Set("authErr", err)
 		return
 	}
 
 	c.Set("user", user)
+
+	return
+}
+
+func AuthMiddleware(c *gin.Context) {
+	err, ok := c.Get("authErr")
+	if ok {
+		c.AbortWithError(http.StatusUnauthorized, err.(error))
+		return
+	}
 }

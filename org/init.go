@@ -7,6 +7,8 @@ import (
 func init() {
 	g := rwe.API.Group("")
 
+	g.Use(UserMiddleware)
+
 	g.POST("/users", createUser)
 	g.POST("/users/login", loginUser)
 

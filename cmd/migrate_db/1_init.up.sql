@@ -28,3 +28,11 @@ CREATE TABLE article_tags (
 
 CREATE UNIQUE INDEX article_tags_article_id_tag_idx
 ON article_tags (article_id, tag);
+
+CREATE TABLE favorite_articles (
+  user_id int8,
+  article_id int8
+);
+
+CREATE UNIQUE INDEX favorite_articles_user_id_article_id_idx
+ON favorite_articles (user_id, article_id);
