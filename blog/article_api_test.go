@@ -3,6 +3,7 @@ package blog_test
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -35,7 +36,7 @@ func init() {
 }
 
 var _ = Describe("createArticle", func() {
-	var resp map[string]interface{}
+	var data map[string]interface{}
 	var slug string
 	var user *org.User
 
@@ -69,29 +70,27 @@ var _ = Describe("createArticle", func() {
 			Email:        "foo@bar.com",
 			PasswordHash: "hash",
 		}
+		_, err := rwe.PGMain().Model(user).Insert()
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	BeforeEach(func() {
-		_, err := rwe.PGMain().Model(user).Insert()
-		Expect(err).NotTo(HaveOccurred())
+		json := `{"title": "How to train your dragon", "description": "Ever wonder how?", "body": "You have to believe", "tagList": ["reactjs", "angularjs", "dragons"]}`
+		resp := PostWithToken("/api/articles", json, user.ID)
 
-		data := `{"title": "How to train your dragon", "description": "Ever wonder how?", "body": "You have to believe", "tagList": ["reactjs", "angularjs", "dragons"]}`
-		req := NewReqWithToken("POST", "/api/articles", data, user.ID)
-
-		ProcessReq(req, 200, &resp)
-
-		slug = resp["article"].(map[string]interface{})["slug"].(string)
+		data = ParseJSON(resp, http.StatusOK)
+		slug = data["article"].(map[string]interface{})["slug"].(string)
 	})
 
 	It("creates new article", func() {
-		Expect(resp["article"]).To(MatchAllKeys(articleKeys))
+		Expect(data["article"]).To(MatchAllKeys(articleKeys))
 	})
 
 	Describe("showArticle", func() {
 		BeforeEach(func() {
-			url := fmt.Sprintf("/api/articles/%s", slug)
-			req := NewReq("GET", url, "")
-			ProcessReq(req, 200, &resp)
+			resp := Get(fmt.Sprintf("/api/articles/%s", slug))
+
+			data = ParseJSON(resp, http.StatusOK)
 		})
 
 		It("returns article", func() {
