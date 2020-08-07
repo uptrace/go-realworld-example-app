@@ -2,7 +2,6 @@ package blog
 
 import (
 	"math/rand"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gosimple/slug"
@@ -60,6 +59,7 @@ func createArticle(c *gin.Context) {
 
 	article.Slug = newSlug(article.Title)
 	article.AuthorID = user.ID
+	article.CreatedAt = rwe.Clock.Now()
 
 	if _, err := rwe.PGMain().
 		ModelContext(c, article).
@@ -115,7 +115,7 @@ func updateArticle(c *gin.Context) {
 		Set("slug = ?", newSlug(newArticle.Title)).
 		Set("description = ?", newArticle.Description).
 		Set("body = ?", newArticle.Body).
-		Set("updated_at = ?", time.Now()).
+		Set("updated_at = ?", rwe.Clock.Now()).
 		Where("id = ?", article.ID).
 		Returning("*").
 		Update(); err != nil {

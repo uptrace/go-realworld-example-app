@@ -10,11 +10,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/uptrace/go-realworld-example-app/xconfig"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/rand"
 )
+
+var Clock = clock.New()
 
 var (
 	WaitGroup sync.WaitGroup

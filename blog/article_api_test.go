@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
 	. "github.com/uptrace/go-realworld-example-app/testbed"
@@ -22,6 +23,7 @@ func TestGinkgo(t *testing.T) {
 }
 
 func init() {
+	rwe.Clock = clock.NewMock()
 	ctx := context.Background()
 
 	cfg, err := xconfig.LoadConfig("test")
@@ -32,50 +34,35 @@ func init() {
 	ctx = rwe.Init(ctx, cfg)
 }
 
-func assertArticle(article map[string]interface{}, keys Keys) {
-	checkTime(article, "createdAt", time.Now())
-
-	matchers := Keys{
-		"description":    Equal("Ever wonder how?"),
-		"body":           Equal("You have to believe"),
-		"author":         Equal(map[string]interface{}{"following": false, "username": "hello", "bio": "", "image": ""}),
-		"tagList":        ConsistOf([]interface{}{"reactjs", "angularjs", "dragons"}),
-		"favoritesCount": Equal(float64(0)),
-		"favorited":      Equal(false),
-		"slug":           HaveSuffix("-how-to-train-your-dragon"),
-		"title":          Equal("How to train your dragon"),
-		"updatedAt":      Equal("0001-01-01T00:00:00Z"),
-	}
-
-	for key, value := range keys {
-		matchers[key] = value
-	}
-
-	Expect(article).To(MatchAllKeys(matchers))
-}
-
-func checkTime(article map[string]interface{}, key string, expectedTime time.Time) {
-	tm, err := time.Parse(time.RFC3339, article[key].(string))
-	Expect(err).NotTo(HaveOccurred())
-
-	ExpectWithOffset(1, tm).To(BeTemporally("~", expectedTime, time.Second))
-	delete(article, key)
-}
-
 var _ = FDescribe("createArticle", func() {
 	var resp map[string]interface{}
 	var slug string
 	var user *org.User
 
-	var favoritedKey = Keys{
-		"favorited":      Equal(true),
-		"favoritesCount": Equal(float64(1)),
-	}
+	var articleKeys, favoritedArticleKeys Keys
 
 	BeforeEach(func() {
 		rwe.PGMain().Exec("TRUNCATE users;")
 		rwe.PGMain().Exec("TRUNCATE articles;")
 		rwe.PGMain().Exec("TRUNCATE article_tags;")
+
+		articleKeys = Keys{
+			"description":    Equal("Ever wonder how?"),
+			"body":           Equal("You have to believe"),
+			"author":         Equal(map[string]interface{}{"following": false, "username": "hello", "bio": "", "image": ""}),
+			"tagList":        ConsistOf([]interface{}{"reactjs", "angularjs", "dragons"}),
+			"favoritesCount": Equal(float64(0)),
+			"favorited":      Equal(false),
+			"slug":           HaveSuffix("-how-to-train-your-dragon"),
+			"title":          Equal("How to train your dragon"),
+			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
+			"updatedAt":      Equal("0001-01-01T00:00:00Z"),
+		}
+
+		favoritedArticleKeys = extend(articleKeys, Keys{
+			"favorited":      Equal(true),
+			"favoritesCount": Equal(float64(1)),
+		})
 
 		user = &org.User{
 			Username:     "hello",
@@ -95,8 +82,7 @@ var _ = FDescribe("createArticle", func() {
 	})
 
 	It("creates new article", func() {
-		article := resp["article"].(map[string]interface{})
-		assertArticle(article, nil)
+		Expect(resp["article"]).To(MatchAllKeys(articleKeys))
 	})
 
 	Describe("showArticle", func() {
@@ -107,8 +93,7 @@ var _ = FDescribe("createArticle", func() {
 		})
 
 		It("returns article", func() {
-			article := resp["article"].(map[string]interface{})
-			assertArticle(article, nil)
+			Expect(resp["article"]).To(MatchAllKeys(articleKeys))
 		})
 	})
 
@@ -124,8 +109,7 @@ var _ = FDescribe("createArticle", func() {
 		})
 
 		It("returns favorited article", func() {
-			article := resp["article"].(map[string]interface{})
-			assertArticle(article, favoritedKey)
+			Expect(resp["article"]).To(MatchAllKeys(favoritedArticleKeys))
 		})
 
 		Describe("unfavoriteArticle", func() {
@@ -140,8 +124,7 @@ var _ = FDescribe("createArticle", func() {
 			})
 
 			It("returns article", func() {
-				article := resp["article"].(map[string]interface{})
-				assertArticle(article, nil)
+				Expect(resp["article"]).To(MatchAllKeys(articleKeys))
 			})
 		})
 	})
@@ -161,8 +144,7 @@ var _ = FDescribe("createArticle", func() {
 
 			Expect(articles).To(HaveLen(1))
 			article := articles[0].(map[string]interface{})
-
-			assertArticle(article, favoritedKey)
+			Expect(article).To(MatchAllKeys(favoritedArticleKeys))
 		})
 	})
 
@@ -176,11 +158,7 @@ var _ = FDescribe("createArticle", func() {
 		})
 
 		It("returns article", func() {
-			article := resp["article"].(map[string]interface{})
-
-			checkTime(article, "createdAt", time.Now())
-			checkTime(article, "updatedAt", time.Now())
-			Expect(article).To(MatchAllKeys(Keys{
+			Expect(resp["article"]).To(MatchAllKeys(Keys{
 				"description":    Equal("20,000 years before"),
 				"body":           Equal("All kinds of animals begin immigrating to the south"),
 				"author":         Equal(map[string]interface{}{"following": false, "username": "hello", "bio": "", "image": ""}),
@@ -189,7 +167,20 @@ var _ = FDescribe("createArticle", func() {
 				"favorited":      Equal(false),
 				"slug":           HaveSuffix("-ice-age"),
 				"title":          Equal("Ice age"),
+				"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
+				"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
 			}))
 		})
 	})
 })
+
+func extend(a, b Keys) Keys {
+	res := make(Keys)
+	for k, v := range a {
+		res[k] = v
+	}
+	for k, v := range b {
+		res[k] = v
+	}
+	return res
+}
