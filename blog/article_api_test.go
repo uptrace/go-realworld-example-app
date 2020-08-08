@@ -46,6 +46,7 @@ var _ = Describe("createArticle", func() {
 		rwe.PGMain().Exec("TRUNCATE users;")
 		rwe.PGMain().Exec("TRUNCATE articles;")
 		rwe.PGMain().Exec("TRUNCATE article_tags;")
+		rwe.PGMain().Exec("TRUNCATE favorite_articles;")
 
 		articleKeys = Keys{
 			"description":    Equal("Ever wonder how?"),
@@ -88,44 +89,45 @@ var _ = Describe("createArticle", func() {
 
 	Describe("showArticle", func() {
 		BeforeEach(func() {
-			resp := Get(fmt.Sprintf("/api/articles/%s", slug))
+			url := fmt.Sprintf("/api/articles/%s", slug)
+			resp := Get(url)
 
 			data = ParseJSON(resp, http.StatusOK)
 		})
 
 		It("returns article", func() {
-			Expect(resp["article"]).To(MatchAllKeys(articleKeys))
+			Expect(data["article"]).To(MatchAllKeys(articleKeys))
 		})
 	})
 
 	Describe("favoriteArticle", func() {
 		BeforeEach(func() {
 			url := fmt.Sprintf("/api/articles/%s/favorite", slug)
-			req := NewReqWithToken("POST", url, "", user.ID)
-			ProcessReq(req, 200, &resp)
+			resp := PostWithToken(url, "", user.ID)
+			ParseJSON(resp, 200)
 
 			url = fmt.Sprintf("/api/articles/%s", slug)
-			req = NewReqWithToken("GET", url, "", user.ID)
-			ProcessReq(req, 200, &resp)
+			resp = GetWithToken(url, user.ID)
+			data = ParseJSON(resp, 200)
 		})
 
 		It("returns favorited article", func() {
-			Expect(resp["article"]).To(MatchAllKeys(favoritedArticleKeys))
+			Expect(data["article"]).To(MatchAllKeys(favoritedArticleKeys))
 		})
 
 		Describe("unfavoriteArticle", func() {
 			BeforeEach(func() {
 				url := fmt.Sprintf("/api/articles/%s/favorite", slug)
-				req := NewReqWithToken("DELETE", url, "", user.ID)
-				ProcessReq(req, 200, &resp)
+				resp := DeleteWithToken(url, user.ID)
+				ParseJSON(resp, 200)
 
 				url = fmt.Sprintf("/api/articles/%s", slug)
-				req = NewReqWithToken("GET", url, "", user.ID)
-				ProcessReq(req, 200, &resp)
+				resp = GetWithToken(url, user.ID)
+				data = ParseJSON(resp, 200)
 			})
 
 			It("returns article", func() {
-				Expect(resp["article"]).To(MatchAllKeys(articleKeys))
+				Expect(data["article"]).To(MatchAllKeys(articleKeys))
 			})
 		})
 	})
@@ -133,15 +135,15 @@ var _ = Describe("createArticle", func() {
 	Describe("listArticles", func() {
 		BeforeEach(func() {
 			url := fmt.Sprintf("/api/articles/%s/favorite", slug)
-			req := NewReqWithToken("POST", url, "", user.ID)
-			ProcessReq(req, 200, &resp)
+			resp := PostWithToken(url, "", user.ID)
+			ParseJSON(resp, 200)
 
-			req = NewReqWithToken("GET", "/api/articles", "", user.ID)
-			ProcessReq(req, 200, &resp)
+			resp = GetWithToken("/api/articles", user.ID)
+			data = ParseJSON(resp, 200)
 		})
 
 		It("returns articles", func() {
-			articles := resp["articles"].([]interface{})
+			articles := data["articles"].([]interface{})
 
 			Expect(articles).To(HaveLen(1))
 			article := articles[0].(map[string]interface{})
@@ -151,15 +153,15 @@ var _ = Describe("createArticle", func() {
 
 	Describe("updateArticle", func() {
 		BeforeEach(func() {
-			data := `{"title": "Ice age", "description": "20,000 years before", "body": "All kinds of animals begin immigrating to the south", "tagList": ["drama", "comedy"]}`
+			json := `{"title": "Ice age", "description": "20,000 years before", "body": "All kinds of animals begin immigrating to the south", "tagList": ["drama", "comedy"]}`
 
 			url := fmt.Sprintf("/api/articles/%s", slug)
-			req := NewReqWithToken("PUT", url, data, user.ID)
-			ProcessReq(req, 200, &resp)
+			resp := PutWithToken(url, json, user.ID)
+			data = ParseJSON(resp, 200)
 		})
 
 		It("returns article", func() {
-			Expect(resp["article"]).To(MatchAllKeys(Keys{
+			Expect(data["article"]).To(MatchAllKeys(Keys{
 				"description":    Equal("20,000 years before"),
 				"body":           Equal("All kinds of animals begin immigrating to the south"),
 				"author":         Equal(map[string]interface{}{"following": false, "username": "hello", "bio": "", "image": ""}),

@@ -12,7 +12,7 @@ func init() {
 	g.POST("/users", createUser)
 	g.POST("/users/login", loginUser)
 
-	g.Use(AuthMiddleware)
+	g.Use(MustUserMiddleware)
 
 	g.GET("/user", currentUser)
 	g.PUT("/users", updateUser)

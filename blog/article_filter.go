@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/go-pg/urlstruct"
+	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
 )
 
@@ -21,6 +22,12 @@ func decodeArticleFilter(c *gin.Context) (*ArticleFilter, error) {
 		Author:    c.Query("author"),
 		Favorited: c.Query("favorited"),
 	}
+
+	user, ok := c.Get("user")
+	if ok {
+		f.UserID = user.(*org.User).ID
+	}
+
 	return f, nil
 }
 
@@ -28,7 +35,8 @@ func (f *ArticleFilter) query(q *orm.Query) (*orm.Query, error) {
 	q = q.Relation("Author")
 
 	{
-		subq := q.
+		// subq := q.
+		subq := rwe.PGMain().Model((*ArticleTag)(nil)).
 			ColumnExpr("array_agg(t.tag)::text[]").
 			Where("t.article_id = a.id")
 

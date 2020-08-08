@@ -13,7 +13,7 @@ func init() {
 	g.GET("/articles", listArticles)
 	g.GET("/articles/:slug", showArticle)
 
-	g.Use(org.AuthMiddleware)
+	g.Use(org.MustUserMiddleware)
 
 	g.POST("/articles", createArticle)
 	g.PUT("/articles/:slug", updateArticle)

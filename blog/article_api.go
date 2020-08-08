@@ -31,13 +31,12 @@ func listArticles(c *gin.Context) {
 	}
 
 	articles := make([]*Article, 0)
-	err := rwe.PGMain().ModelContext(c, &articles).
+	if err := rwe.PGMain().ModelContext(c, &articles).
 		ColumnExpr("?TableColumns").
 		Apply(f.query).
 		Limit(f.Pager.GetLimit()).
 		Offset(f.Pager.GetOffset()).
-		Select()
-	if err != nil {
+		Select(); err != nil {
 		c.Error(err)
 		return
 	}
@@ -57,7 +56,7 @@ func showArticle(c *gin.Context) {
 		ModelContext(c, article).
 		ColumnExpr("?TableColumns").
 		Apply(f.query).
-		Where("slug = ?", slug).
+		Where("slug = ?", c.Param("slug")).
 		Select(); err != nil {
 		c.Error(err)
 		return
@@ -85,55 +84,32 @@ func createArticle(c *gin.Context) {
 		return
 	}
 
-	tags := make([]ArticleTag, 0, len(article.TagList))
-	for _, t := range article.TagList {
-		tags = append(tags, ArticleTag{
-			ArticleID: article.ID,
-			Tag:       t,
-		})
-	}
-
-	if _, err := rwe.PGMain().
-		ModelContext(c, &tags).
-		Insert(); err != nil {
+	if err := createTags(c, article); err != nil {
 		c.Error(err)
 		return
 	}
 
-	article.Author = &Author{
-		Username:  user.Username,
-		Bio:       user.Bio,
-		Image:     user.Image,
-		Following: false,
-	}
+	article.SetAuthor(user)
 	c.JSON(200, gin.H{"article": article})
 }
 
 func updateArticle(c *gin.Context) {
 	user := c.MustGet("user").(*org.User)
 
-	article, err := SelectArticle(c, c.Param("slug"))
-	if err != nil {
-		c.Error(err)
+	article := new(Article)
+	if err := c.BindJSON(article); err != nil {
 		return
 	}
 
-	newArticle := new(Article)
-	if err := c.BindJSON(newArticle); err != nil {
-		return
-	}
-
-	newArticle.Slug = slug.Make(randBytes(6) + " " + article.Title)
-	newArticle.AuthorID = user.ID
-
+	article.Slug = slug.Make(randBytes(6) + " " + article.Title)
 	if _, err := rwe.PGMain().
-		ModelContext(c, newArticle).
-		Set("title = ?", newArticle.Title).
-		Set("slug = ?", newSlug(newArticle.Title)).
-		Set("description = ?", newArticle.Description).
-		Set("body = ?", newArticle.Body).
+		ModelContext(c, article).
+		Set("title = ?", article.Title).
+		Set("slug = ?", newSlug(article.Title)).
+		Set("description = ?", article.Description).
+		Set("body = ?", article.Body).
 		Set("updated_at = ?", rwe.Clock.Now()).
-		Where("id = ?", article.ID).
+		Where("slug = ?", c.Param("slug")).
 		Returning("*").
 		Update(); err != nil {
 		c.Error(err)
@@ -147,6 +123,20 @@ func updateArticle(c *gin.Context) {
 		return
 	}
 
+	if err := createTags(c, article); err != nil {
+		c.Error(err)
+		return
+	}
+
+	article.SetAuthor(user)
+	c.JSON(200, gin.H{"article": article})
+}
+
+func createTags(c *gin.Context, article *Article) error {
+	if len(article.TagList) == 0 {
+		return nil
+	}
+
 	tags := make([]ArticleTag, 0, len(article.TagList))
 	for _, t := range article.TagList {
 		tags = append(tags, ArticleTag{
@@ -158,17 +148,10 @@ func updateArticle(c *gin.Context) {
 	if _, err := rwe.PGMain().
 		ModelContext(c, &tags).
 		Insert(); err != nil {
-		c.Error(err)
-		return
+		return err
 	}
 
-	newArticle.Author = &Author{
-		Username:  user.Username,
-		Bio:       user.Bio,
-		Image:     user.Image,
-		Following: false,
-	}
-	c.JSON(200, gin.H{"article": newArticle})
+	return nil
 }
 
 func favoriteArticle(c *gin.Context) {

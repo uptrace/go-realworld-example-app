@@ -40,7 +40,7 @@ func UserMiddleware(c *gin.Context) {
 	return
 }
 
-func AuthMiddleware(c *gin.Context) {
+func MustUserMiddleware(c *gin.Context) {
 	err, ok := c.Get("authErr")
 	if ok {
 		c.AbortWithError(http.StatusUnauthorized, err.(error))
