@@ -13,31 +13,64 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func NewReqWithToken(method, url, data string, userID uint64) *http.Request {
-	req := NewReq(method, url, data)
-
+func setToken(req *http.Request, userID uint64) {
 	token, err := org.CreateUserToken(userID, time.Hour)
 	Expect(err).NotTo(HaveOccurred())
 
 	req.Header.Set("Authorization", "Token "+token)
-	return req
 }
 
-func NewReq(method, url, data string) *http.Request {
+func DoReqWithToken(method, url, data string, userID uint64) *httptest.ResponseRecorder {
+	req, err := http.NewRequest(method, url, bytes.NewBufferString(data))
+	Expect(err).NotTo(HaveOccurred())
+
+	req.Header.Set("Content-Type", "application/json")
+	setToken(req, userID)
+
+	return serve(req)
+}
+
+func DoReq(method, url, data string) *httptest.ResponseRecorder {
 	req, err := http.NewRequest(method, url, bytes.NewBufferString(data))
 	Expect(err).NotTo(HaveOccurred())
 
 	req.Header.Set("Content-Type", "application/json")
 
-	return req
+	return serve(req)
 }
 
-func ProcessReq(req *http.Request, code int, v interface{}) {
-	w := httptest.NewRecorder()
-	rwe.Router.ServeHTTP(w, req)
-
-	Expect(w.Code).To(Equal(code))
-
-	err := json.Unmarshal(w.Body.Bytes(), v)
+func ParseJSON(resp *httptest.ResponseRecorder, code int) map[string]interface{} {
+	res := make(map[string]interface{})
+	err := json.Unmarshal(resp.Body.Bytes(), &res)
 	Expect(err).NotTo(HaveOccurred())
+
+	Expect(resp.Code).To(Equal(code))
+
+	return res
+}
+
+func serve(req *http.Request) *httptest.ResponseRecorder {
+	resp := httptest.NewRecorder()
+	rwe.Router.ServeHTTP(resp, req)
+	return resp
+}
+
+func Get(url string) *httptest.ResponseRecorder {
+	return DoReq("GET", url, "")
+}
+
+func GetWithToken(url string, userID uint64) *httptest.ResponseRecorder {
+	return DoReqWithToken("GET", url, "", userID)
+}
+
+func PostWithToken(url, data string, userID uint64) *httptest.ResponseRecorder {
+	return DoReqWithToken("POST", url, data, userID)
+}
+
+func PutWithToken(url, data string, userID uint64) *httptest.ResponseRecorder {
+	return DoReqWithToken("PUT", url, data, userID)
+}
+
+func DeleteWithToken(url string, userID uint64) *httptest.ResponseRecorder {
+	return DoReqWithToken("DELETE", url, "", userID)
 }

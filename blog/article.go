@@ -2,6 +2,10 @@ package blog
 
 import (
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/uptrace/go-realworld-example-app/org"
+	"github.com/uptrace/go-realworld-example-app/rwe"
 )
 
 type Article struct {
@@ -26,6 +30,15 @@ type Article struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+func (a *Article) SetAuthor(user *org.User) {
+	a.Author = &Author{
+		Username:  user.Username,
+		Bio:       user.Bio,
+		Image:     user.Image,
+		Following: false,
+	}
+}
+
 type Author struct {
 	tableName struct{} `pg:"users,alias:u"`
 
@@ -41,4 +54,21 @@ type ArticleTag struct {
 
 	ArticleID uint64
 	Tag       string
+}
+
+type FavoriteArticle struct {
+	tableName struct{} `pg:"alias:fa"`
+
+	UserID    uint64
+	ArticleID uint64
+}
+
+func SelectArticle(c *gin.Context, slug string) (*Article, error) {
+	article := new(Article)
+	if err := rwe.PGMain().ModelContext(c, article).
+		Where("slug = ?", slug).
+		Select(); err != nil {
+		return nil, err
+	}
+	return article, nil
 }

@@ -8,10 +8,16 @@ import (
 func init() {
 	g := rwe.API.Group("")
 
+	g.Use(org.UserMiddleware)
+
 	g.GET("/articles", listArticles)
 	g.GET("/articles/:slug", showArticle)
 
-	g.Use(org.AuthMiddleware)
+	g.Use(org.MustUserMiddleware)
 
 	g.POST("/articles", createArticle)
+	g.PUT("/articles/:slug", updateArticle)
+
+	g.POST("/articles/:slug/favorite", favoriteArticle)
+	g.DELETE("/articles/:slug/favorite", unfavoriteArticle)
 }

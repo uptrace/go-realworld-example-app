@@ -20,6 +20,14 @@ type User struct {
 	Token string `pg:"-" json:"token,omitempty"`
 }
 
+type Profile struct {
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Bio       string `json:"bio"`
+	Image     string `json:"image"`
+	Following bool   `json:"following"`
+}
+
 func SelectUser(ctx context.Context, id uint64) (*User, error) {
 	user := new(User)
 	if err := rwe.PGMain().
