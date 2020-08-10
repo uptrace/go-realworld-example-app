@@ -16,4 +16,8 @@ func init() {
 
 	g.GET("/user", currentUser)
 	g.PUT("/users", updateUser)
+
+	g.POST("/profiles/:username/follow", followUser)
+	g.DELETE("/profiles/:username/follow", unfollowUser)
+
 }

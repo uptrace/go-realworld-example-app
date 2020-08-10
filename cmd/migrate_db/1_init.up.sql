@@ -7,6 +7,9 @@ CREATE TABLE users (
   password_hash varchar(500) NOT NULL
 );
 
+CREATE UNIQUE INDEX users_email_idx ON users (email);
+CREATE UNIQUE INDEX users_username_idx ON users (username);
+
 --gopg:split
 
 CREATE TABLE articles (
@@ -22,7 +25,7 @@ CREATE TABLE articles (
 );
 
 CREATE TABLE article_tags (
-  article_id int8,
+  article_id int8 NOT NULL REFERENCES articles (id) ON DELETE CASCADE,
   tag varchar(500)
 );
 
@@ -31,8 +34,16 @@ ON article_tags (article_id, tag);
 
 CREATE TABLE favorite_articles (
   user_id int8,
-  article_id int8
+  article_id int8 NOT NULL REFERENCES articles (id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX favorite_articles_user_id_article_id_idx
 ON favorite_articles (user_id, article_id);
+
+CREATE TABLE follow_users (
+  user_id  int8 NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  followed_user_id int8 NOT NULL REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX follow_users_user_id_followed_user_id_idx
+ON follow_users (user_id, followed_user_id);

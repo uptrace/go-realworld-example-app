@@ -140,3 +140,49 @@ func updateUser(c *gin.Context) {
 	user.Password = ""
 	c.JSON(200, gin.H{"user": authUser})
 }
+
+func followUser(c *gin.Context) {
+	authUser := c.MustGet("user").(*User)
+
+	user, err := SelectUserByUsername(c, c.Param("username"))
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	followUser := &FollowUser{
+		UserID:         authUser.ID,
+		FollowedUserID: user.ID,
+	}
+	if _, err := rwe.PGMain().
+		ModelContext(c, followUser).
+		Insert(); err != nil {
+		c.Error(err)
+		return
+	}
+
+	user.Following = true
+	c.JSON(200, gin.H{"profile": NewProfile(user)})
+}
+
+func unfollowUser(c *gin.Context) {
+	authUser := c.MustGet("user").(*User)
+
+	user, err := SelectUserByUsername(c, c.Param("username"))
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if _, err := rwe.PGMain().
+		ModelContext(c, (*FollowUser)(nil)).
+		Where("user_id = ?", authUser.ID).
+		Where("followed_user_id = ?", user.ID).
+		Delete(); err != nil {
+		c.Error(err)
+		return
+	}
+
+	user.Following = false
+	c.JSON(200, gin.H{"profile": NewProfile(user)})
+}

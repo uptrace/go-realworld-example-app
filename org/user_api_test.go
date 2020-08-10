@@ -2,9 +2,13 @@ package org_test
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"testing"
 
+	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
+	. "github.com/uptrace/go-realworld-example-app/testbed"
 	"github.com/uptrace/go-realworld-example-app/xconfig"
 
 	. "github.com/onsi/ginkgo"
@@ -30,80 +34,124 @@ func init() {
 
 func assertUser(user map[string]interface{}) {
 	Expect(user).To(MatchAllKeys(Keys{
-		"username": Equal("wangzitian0"),
-		"email":    Equal("wzt@gg.cn"),
-		"bio":      Equal("bar"),
-		"image":    Equal("img"),
-		"token":    Not(BeEmpty()),
+		"username":  Equal("wangzitian0"),
+		"email":     Equal("wzt@gg.cn"),
+		"bio":       Equal("bar"),
+		"image":     Equal("img"),
+		"token":     Not(BeEmpty()),
+		"following": Equal(false),
 	}))
 }
 
 var _ = Describe("createUser", func() {
-	var resp map[string]interface{}
+	var data map[string]interface{}
 
 	BeforeEach(func() {
-		rwe.PGMain().Exec("TRUNCATE users;")
+		_, err := rwe.PGMain().Exec("TRUNCATE follow_users, users;")
+		Expect(err).NotTo(HaveOccurred())
 
-		data := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke", "image": "img", "bio": "bar"}`
-		req := newReq("POST", "/api/users", data)
+		json := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke", "image": "img", "bio": "bar"}`
+		resp := Post("/api/users", json)
 
-		processReq(req, 200, &resp)
+		data = ParseJSON(resp, http.StatusOK)
 	})
 
 	It("creates new user", func() {
-		assertUser(resp["user"].(map[string]interface{}))
+		assertUser(data["user"].(map[string]interface{}))
 	})
 
 	Describe("loginUser", func() {
-		var resp map[string]interface{}
-		var token string
+		var user *org.User
 
 		BeforeEach(func() {
-			data := `{"email": "wzt@gg.cn","password": "jakejxke"}`
-			req := newReq("POST", "/api/users/login", data)
+			json := `{"email": "wzt@gg.cn","password": "jakejxke"}`
+			resp := Post("/api/users/login", json)
 
-			processReq(req, 200, &resp)
-			token = resp["user"].(map[string]interface{})["token"].(string)
+			data = ParseJSON(resp, http.StatusOK)
+
+			username := data["user"].(map[string]interface{})["username"].(string)
+			var err error
+			user, err = org.SelectUserByUsername(context.Background(), username)
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("returns user with JWT token", func() {
-			assertUser(resp["user"].(map[string]interface{}))
+			assertUser(data["user"].(map[string]interface{}))
 		})
 
 		Describe("currentUser", func() {
-			var resp map[string]interface{}
-
 			BeforeEach(func() {
-				req := newReq("GET", "/api/user", "")
-				req.Header.Set("Authorization", "Token "+token)
-				processReq(req, 200, &resp)
+				resp := GetWithToken("/api/user", user.ID)
+				data = ParseJSON(resp, http.StatusOK)
 			})
 
 			It("returns logged in user", func() {
-				assertUser(resp["user"].(map[string]interface{}))
+				assertUser(data["user"].(map[string]interface{}))
 			})
 		})
 
 		Describe("updateUser", func() {
-			var resp map[string]interface{}
-
 			BeforeEach(func() {
-				data := `{"username": "hello","email": "foo@bar.com", "image": "bar", "bio": "foo"}`
-				req := newReq("PUT", "/api/users", data)
-
-				req.Header.Set("Authorization", "Token "+token)
-				processReq(req, 200, &resp)
+				json := `{"username": "hello","email": "foo@bar.com", "image": "bar", "bio": "foo"}`
+				resp := PutWithToken("/api/users", json, user.ID)
+				data = ParseJSON(resp, http.StatusOK)
 			})
 
 			It("returns updated user", func() {
-				user := resp["user"].(map[string]interface{})
+				user := data["user"].(map[string]interface{})
 				Expect(user).To(MatchAllKeys(Keys{
-					"username": Equal("hello"),
-					"email":    Equal("foo@bar.com"),
-					"bio":      Equal("foo"),
-					"image":    Equal("bar"),
-					"token":    Not(BeEmpty()),
+					"username":  Equal("hello"),
+					"email":     Equal("foo@bar.com"),
+					"bio":       Equal("foo"),
+					"image":     Equal("bar"),
+					"token":     Not(BeEmpty()),
+					"following": Equal(false),
 				}))
+			})
+		})
+
+		Describe("followUser", func() {
+			var username string
+
+			BeforeEach(func() {
+				json := `{"username": "hello","email": "foo@bar.com","password": "pwd"}`
+				resp := Post("/api/users", json)
+
+				data = ParseJSON(resp, http.StatusOK)
+
+				username = data["user"].(map[string]interface{})["username"].(string)
+
+				url := fmt.Sprintf("/api/profiles/%s/follow", username)
+				resp = PostWithToken(url, "", user.ID)
+				data = ParseJSON(resp, 200)
+			})
+
+			It("returns followed profile", func() {
+				profile := data["profile"].(map[string]interface{})
+				Expect(profile).To(MatchAllKeys(Keys{
+					"username":  Equal("hello"),
+					"bio":       Equal(""),
+					"image":     Equal(""),
+					"following": Equal(true),
+				}))
+			})
+
+			Describe("unfollowUser", func() {
+				BeforeEach(func() {
+					url := fmt.Sprintf("/api/profiles/%s/follow", username)
+					resp := DeleteWithToken(url, user.ID)
+					data = ParseJSON(resp, 200)
+				})
+
+				It("returns profile", func() {
+					profile := data["profile"].(map[string]interface{})
+					Expect(profile).To(MatchAllKeys(Keys{
+						"username":  Equal("hello"),
+						"bio":       Equal(""),
+						"image":     Equal(""),
+						"following": Equal(false),
+					}))
+				})
 			})
 		})
 	})

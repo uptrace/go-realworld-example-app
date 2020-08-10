@@ -3,9 +3,10 @@ package blog
 import (
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Article struct {
@@ -17,8 +18,8 @@ type Article struct {
 	Description string `json:"description"`
 	Body        string `json:"body"`
 
-	Author   *Author `json:"author"`
-	AuthorID uint64  `json:"-"`
+	Author   *org.Profile `json:"author"`
+	AuthorID uint64       `json:"-"`
 
 	Tags    []ArticleTag `json:"-"`
 	TagList []string     `json:"tagList" pg:"-,array"`
@@ -28,25 +29,6 @@ type Article struct {
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-func (a *Article) SetAuthor(user *org.User) {
-	a.Author = &Author{
-		Username:  user.Username,
-		Bio:       user.Bio,
-		Image:     user.Image,
-		Following: false,
-	}
-}
-
-type Author struct {
-	tableName struct{} `pg:"users,alias:u"`
-
-	ID        uint64 `json:"-"`
-	Username  string `json:"username"`
-	Bio       string `json:"bio"`
-	Image     string `json:"image"`
-	Following bool   `json:"following" pg:"-"`
 }
 
 type ArticleTag struct {

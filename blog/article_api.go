@@ -2,25 +2,17 @@ package blog
 
 import (
 	"math/rand"
+	"strconv"
+
+	"github.com/uptrace/go-realworld-example-app/org"
+	"github.com/uptrace/go-realworld-example-app/rwe"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gosimple/slug"
-	"github.com/uptrace/go-realworld-example-app/org"
-	"github.com/uptrace/go-realworld-example-app/rwe"
 )
 
-const charsBytes = "01234567890"
-
-func randBytes(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = charsBytes[rand.Intn(len(charsBytes))]
-	}
-	return string(b)
-}
-
-func newSlug(title string) string {
-	return slug.Make(randBytes(6) + " " + title)
+func makeSlug(title string) string {
+	return slug.Make(strconv.Itoa(rand.Int()) + " " + title)
 }
 
 func listArticles(c *gin.Context) {
@@ -73,7 +65,7 @@ func createArticle(c *gin.Context) {
 		return
 	}
 
-	article.Slug = newSlug(article.Title)
+	article.Slug = makeSlug(article.Title)
 	article.AuthorID = user.ID
 	article.CreatedAt = rwe.Clock.Now()
 
@@ -89,7 +81,7 @@ func createArticle(c *gin.Context) {
 		return
 	}
 
-	article.SetAuthor(user)
+	article.Author = org.NewProfile(user)
 	c.JSON(200, gin.H{"article": article})
 }
 
@@ -101,11 +93,10 @@ func updateArticle(c *gin.Context) {
 		return
 	}
 
-	article.Slug = slug.Make(randBytes(6) + " " + article.Title)
 	if _, err := rwe.PGMain().
 		ModelContext(c, article).
 		Set("title = ?", article.Title).
-		Set("slug = ?", newSlug(article.Title)).
+		Set("slug = ?", makeSlug(article.Title)).
 		Set("description = ?", article.Description).
 		Set("body = ?", article.Body).
 		Set("updated_at = ?", rwe.Clock.Now()).
@@ -116,9 +107,7 @@ func updateArticle(c *gin.Context) {
 		return
 	}
 
-	if _, err := rwe.PGMain().ModelContext(c, (*ArticleTag)(nil)).
-		Where("article_id = ?", article.ID).
-		Delete(); err != nil {
+	if err := deleteArticleTags(c, article.ID); err != nil {
 		c.Error(err)
 		return
 	}
@@ -128,8 +117,30 @@ func updateArticle(c *gin.Context) {
 		return
 	}
 
-	article.SetAuthor(user)
+	article.Author = org.NewProfile(user)
 	c.JSON(200, gin.H{"article": article})
+}
+
+func deleteArticle(c *gin.Context) {
+	if _, err := rwe.PGMain().
+		ModelContext(c, (*Article)(nil)).
+		Where("slug = ?", c.Param("slug")).
+		Delete(); err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, nil)
+}
+
+func deleteArticleTags(c *gin.Context, articleID uint64) error {
+	if _, err := rwe.PGMain().ModelContext(c, (*ArticleTag)(nil)).
+		Where("article_id = ?", articleID).
+		Delete(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func createTags(c *gin.Context, article *Article) error {
@@ -173,7 +184,7 @@ func favoriteArticle(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"profile": article})
+	c.JSON(200, gin.H{"article": article})
 }
 
 func unfavoriteArticle(c *gin.Context) {
@@ -186,12 +197,12 @@ func unfavoriteArticle(c *gin.Context) {
 
 	if _, err := rwe.PGMain().
 		ModelContext(c, (*FavoriteArticle)(nil)).
-		Where("user_id = ?", article.ID).
-		Where("article_id = ?", user.ID).
+		Where("user_id = ?", user.ID).
+		Where("article_id = ?", article.ID).
 		Delete(); err != nil {
 		c.Error(err)
 		return
 	}
 
-	c.JSON(200, gin.H{"profile": article})
+	c.JSON(200, gin.H{"article": article})
 }
