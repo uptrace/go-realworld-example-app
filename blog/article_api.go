@@ -107,7 +107,9 @@ func updateArticle(c *gin.Context) {
 		return
 	}
 
-	if err := deleteArticleTags(c, article.ID); err != nil {
+	if _, err := rwe.PGMain().ModelContext(c, (*ArticleTag)(nil)).
+		Where("article_id = ?", article.ID).
+		Delete(); err != nil {
 		c.Error(err)
 		return
 	}
@@ -131,16 +133,6 @@ func deleteArticle(c *gin.Context) {
 	}
 
 	c.JSON(200, nil)
-}
-
-func deleteArticleTags(c *gin.Context, articleID uint64) error {
-	if _, err := rwe.PGMain().ModelContext(c, (*ArticleTag)(nil)).
-		Where("article_id = ?", articleID).
-		Delete(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func createTags(c *gin.Context, article *Article) error {
