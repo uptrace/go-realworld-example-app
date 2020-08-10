@@ -20,25 +20,6 @@ func setToken(req *http.Request, userID uint64) {
 	req.Header.Set("Authorization", "Token "+token)
 }
 
-func DoReqWithToken(method, url, data string, userID uint64) *httptest.ResponseRecorder {
-	req, err := http.NewRequest(method, url, bytes.NewBufferString(data))
-	Expect(err).NotTo(HaveOccurred())
-
-	req.Header.Set("Content-Type", "application/json")
-	setToken(req, userID)
-
-	return serve(req)
-}
-
-func DoReq(method, url, data string) *httptest.ResponseRecorder {
-	req, err := http.NewRequest(method, url, bytes.NewBufferString(data))
-	Expect(err).NotTo(HaveOccurred())
-
-	req.Header.Set("Content-Type", "application/json")
-
-	return serve(req)
-}
-
 func ParseJSON(resp *httptest.ResponseRecorder, code int) map[string]interface{} {
 	res := make(map[string]interface{})
 	err := json.Unmarshal(resp.Body.Bytes(), &res)
@@ -56,21 +37,41 @@ func serve(req *http.Request) *httptest.ResponseRecorder {
 }
 
 func Get(url string) *httptest.ResponseRecorder {
-	return DoReq("GET", url, "")
+	req := httptest.NewRequest("GET", url, nil)
+	req.Header.Set("Content-Type", "application/json")
+	return serve(req)
 }
 
 func GetWithToken(url string, userID uint64) *httptest.ResponseRecorder {
-	return DoReqWithToken("GET", url, "", userID)
+	req := httptest.NewRequest("GET", url, nil)
+	req.Header.Set("Content-Type", "application/json")
+	setToken(req, userID)
+	return serve(req)
+}
+
+func Post(url, data string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest("POST", url, bytes.NewBufferString(data))
+	req.Header.Set("Content-Type", "application/json")
+	return serve(req)
 }
 
 func PostWithToken(url, data string, userID uint64) *httptest.ResponseRecorder {
-	return DoReqWithToken("POST", url, data, userID)
+	req := httptest.NewRequest("POST", url, bytes.NewBufferString(data))
+	req.Header.Set("Content-Type", "application/json")
+	setToken(req, userID)
+	return serve(req)
 }
 
 func PutWithToken(url, data string, userID uint64) *httptest.ResponseRecorder {
-	return DoReqWithToken("PUT", url, data, userID)
+	req := httptest.NewRequest("PUT", url, bytes.NewBufferString(data))
+	req.Header.Set("Content-Type", "application/json")
+	setToken(req, userID)
+	return serve(req)
 }
 
 func DeleteWithToken(url string, userID uint64) *httptest.ResponseRecorder {
-	return DoReqWithToken("DELETE", url, "", userID)
+	req := httptest.NewRequest("DELETE", url, nil)
+	req.Header.Set("Content-Type", "application/json")
+	setToken(req, userID)
+	return serve(req)
 }

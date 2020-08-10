@@ -17,6 +17,7 @@ func init() {
 
 	g.POST("/articles", createArticle)
 	g.PUT("/articles/:slug", updateArticle)
+	g.DELETE("/articles/:slug", deleteArticle)
 
 	g.POST("/articles/:slug/favorite", favoriteArticle)
 	g.DELETE("/articles/:slug/favorite", unfavoriteArticle)

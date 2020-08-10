@@ -43,10 +43,11 @@ var _ = Describe("createArticle", func() {
 	var articleKeys, favoritedArticleKeys Keys
 
 	BeforeEach(func() {
-		rwe.PGMain().Exec("TRUNCATE users;")
-		rwe.PGMain().Exec("TRUNCATE articles;")
-		rwe.PGMain().Exec("TRUNCATE article_tags;")
-		rwe.PGMain().Exec("TRUNCATE favorite_articles;")
+		_, err := rwe.PGMain().Exec("TRUNCATE users, follow_users;")
+		Expect(err).NotTo(HaveOccurred())
+
+		_, err = rwe.PGMain().Exec("TRUNCATE articles, article_tags, favorite_articles;")
+		Expect(err).NotTo(HaveOccurred())
 
 		articleKeys = Keys{
 			"description":    Equal("Ever wonder how?"),
@@ -71,7 +72,7 @@ var _ = Describe("createArticle", func() {
 			Email:        "foo@bar.com",
 			PasswordHash: "hash",
 		}
-		_, err := rwe.PGMain().Model(user).Insert()
+		_, err = rwe.PGMain().Model(user).Insert()
 		Expect(err).NotTo(HaveOccurred())
 	})
 
@@ -104,7 +105,7 @@ var _ = Describe("createArticle", func() {
 		BeforeEach(func() {
 			url := fmt.Sprintf("/api/articles/%s/favorite", slug)
 			resp := PostWithToken(url, "", user.ID)
-			ParseJSON(resp, 200)
+			_ = ParseJSON(resp, 200)
 
 			url = fmt.Sprintf("/api/articles/%s", slug)
 			resp = GetWithToken(url, user.ID)
@@ -119,7 +120,7 @@ var _ = Describe("createArticle", func() {
 			BeforeEach(func() {
 				url := fmt.Sprintf("/api/articles/%s/favorite", slug)
 				resp := DeleteWithToken(url, user.ID)
-				ParseJSON(resp, 200)
+				_ = ParseJSON(resp, 200)
 
 				url = fmt.Sprintf("/api/articles/%s", slug)
 				resp = GetWithToken(url, user.ID)
@@ -136,7 +137,7 @@ var _ = Describe("createArticle", func() {
 		BeforeEach(func() {
 			url := fmt.Sprintf("/api/articles/%s/favorite", slug)
 			resp := PostWithToken(url, "", user.ID)
-			ParseJSON(resp, 200)
+			_ = ParseJSON(resp, 200)
 
 			resp = GetWithToken("/api/articles", user.ID)
 			data = ParseJSON(resp, 200)
@@ -173,6 +174,18 @@ var _ = Describe("createArticle", func() {
 				"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
 				"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
 			}))
+		})
+	})
+
+	Describe("deleteArticle", func() {
+		BeforeEach(func() {
+			url := fmt.Sprintf("/api/articles/%s", slug)
+			resp := DeleteWithToken(url, user.ID)
+			data = ParseJSON(resp, 200)
+		})
+
+		It("returns article", func() {
+			Expect(data).To(BeNil())
 		})
 	})
 })

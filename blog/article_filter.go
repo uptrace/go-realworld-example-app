@@ -35,7 +35,6 @@ func (f *ArticleFilter) query(q *orm.Query) (*orm.Query, error) {
 	q = q.Relation("Author")
 
 	{
-		// subq := q.
 		subq := rwe.PGMain().Model((*ArticleTag)(nil)).
 			ColumnExpr("array_agg(t.tag)::text[]").
 			Where("t.article_id = a.id")
