@@ -176,6 +176,18 @@ var _ = Describe("createArticle", func() {
 			}))
 		})
 	})
+
+	Describe("deleteArticle", func() {
+		BeforeEach(func() {
+			url := fmt.Sprintf("/api/articles/%s", slug)
+			resp := DeleteWithToken(url, user.ID)
+			data = ParseJSON(resp, 200)
+		})
+
+		It("returns article", func() {
+			Expect(data).To(BeNil())
+		})
+	})
 })
 
 func extend(a, b Keys) Keys {

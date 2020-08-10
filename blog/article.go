@@ -1,12 +1,11 @@
 package blog
 
 import (
+	"context"
 	"time"
 
 	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
-
-	"github.com/gin-gonic/gin"
 )
 
 type Article struct {
@@ -45,7 +44,7 @@ type FavoriteArticle struct {
 	ArticleID uint64
 }
 
-func SelectArticle(c *gin.Context, slug string) (*Article, error) {
+func SelectArticle(c context.Context, slug string) (*Article, error) {
 	article := new(Article)
 	if err := rwe.PGMain().ModelContext(c, article).
 		Where("slug = ?", slug).
