@@ -11,6 +11,7 @@ import (
 	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
 	. "github.com/uptrace/go-realworld-example-app/testbed"
+	. "github.com/uptrace/go-realworld-example-app/testhelper"
 	"github.com/uptrace/go-realworld-example-app/xconfig"
 
 	. "github.com/onsi/ginkgo"
@@ -35,49 +36,59 @@ func init() {
 	ctx = rwe.Init(ctx, cfg)
 }
 
-var _ = Describe("createArticle", func() {
+var _ = FDescribe("createArticle", func() {
 	var data map[string]interface{}
 	var slug string
 	var user *org.User
 
-	var articleKeys, favoritedArticleKeys Keys
+	var helloArticleKeys, fooArticleKeys, favoritedArticleKeys Keys
 
 	BeforeEach(func() {
-		_, err := rwe.PGMain().Exec("TRUNCATE users, follow_users;")
-		Expect(err).NotTo(HaveOccurred())
+		TruncateUsersTable()
+		TruncateArticlesTable()
 
-		_, err = rwe.PGMain().Exec("TRUNCATE articles, article_tags, favorite_articles;")
-		Expect(err).NotTo(HaveOccurred())
-
-		articleKeys = Keys{
-			"description":    Equal("Ever wonder how?"),
-			"body":           Equal("You have to believe"),
-			"author":         Equal(map[string]interface{}{"following": false, "username": "hello", "bio": "", "image": ""}),
-			"tagList":        ConsistOf([]interface{}{"reactjs", "angularjs", "dragons"}),
+		helloArticleKeys = Keys{
+			"title":          Equal("Hello world"),
+			"slug":           HaveSuffix("-hello-world"),
+			"description":    Equal("Hello world article description!"),
+			"body":           Equal("Hello world article body."),
+			"author":         Equal(map[string]interface{}{"following": false, "username": "CurrentUser", "bio": "", "image": ""}),
+			"tagList":        ConsistOf([]interface{}{"greeting", "welcome", "salut"}),
 			"favoritesCount": Equal(float64(0)),
 			"favorited":      Equal(false),
-			"slug":           HaveSuffix("-how-to-train-your-dragon"),
-			"title":          Equal("How to train your dragon"),
 			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
 			"updatedAt":      Equal("0001-01-01T00:00:00Z"),
 		}
 
-		favoritedArticleKeys = extend(articleKeys, Keys{
+		favoritedArticleKeys = Extend(helloArticleKeys, Keys{
 			"favorited":      Equal(true),
 			"favoritesCount": Equal(float64(1)),
 		})
 
-		user = &org.User{
-			Username:     "hello",
-			Email:        "foo@bar.com",
-			PasswordHash: "hash",
+		fooArticleKeys = Keys{
+			"title":          Equal("Foo bar"),
+			"slug":           HaveSuffix("-foo-bar"),
+			"description":    Equal("Foo bar article description!"),
+			"body":           Equal("Foo bar article body."),
+			"author":         Equal(map[string]interface{}{"following": false, "username": "CurrentUser", "bio": "", "image": ""}),
+			"tagList":        ConsistOf([]interface{}{"foobar", "variable"}),
+			"favoritesCount": Equal(float64(0)),
+			"favorited":      Equal(false),
+			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
+			"updatedAt":      Equal("0001-01-01T00:00:00Z"),
 		}
-		_, err = rwe.PGMain().Model(user).Insert()
+
+		user = &org.User{
+			Username:     "CurrentUser",
+			Email:        "hello@world.com",
+			PasswordHash: "#1",
+		}
+		_, err := rwe.PGMain().Model(user).Insert()
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	BeforeEach(func() {
-		json := `{"title": "How to train your dragon", "description": "Ever wonder how?", "body": "You have to believe", "tagList": ["reactjs", "angularjs", "dragons"]}`
+		json := `{"title": "Hello world", "description": "Hello world article description!", "body": "Hello world article body.", "tagList": ["greeting", "welcome", "salut"]}`
 		resp := PostWithToken("/api/articles", json, user.ID)
 
 		data = ParseJSON(resp, http.StatusOK)
@@ -85,7 +96,41 @@ var _ = Describe("createArticle", func() {
 	})
 
 	It("creates new article", func() {
-		Expect(data["article"]).To(MatchAllKeys(articleKeys))
+		Expect(data["article"]).To(MatchAllKeys(helloArticleKeys))
+	})
+
+	Describe("showFeed", func() {
+		BeforeEach(func() {
+			followedUser := &org.User{
+				Username:     "FollowedUser",
+				Email:        "foo@bar.com",
+				PasswordHash: "h2",
+			}
+			_, err := rwe.PGMain().Model(followedUser).Insert()
+			Expect(err).NotTo(HaveOccurred())
+
+			url := fmt.Sprintf("/api/profiles/%s/follow", followedUser.Username)
+			resp := PostWithToken(url, "", user.ID)
+			_ = ParseJSON(resp, 200)
+
+			json := `{"title": "Foo bar", "description": "Foo bar article description!", "body": "Foo bar article body.", "tagList": ["foobar", "variable"]}`
+			resp = PostWithToken("/api/articles", json, followedUser.ID)
+
+			_ = ParseJSON(resp, http.StatusOK)
+
+			resp = GetWithToken("/api/articles/feed", user.ID)
+			data = ParseJSON(resp, http.StatusOK)
+		})
+
+		It("returns article", func() {
+			articles := data["articles"].([]interface{})
+
+			Expect(articles).To(HaveLen(1))
+			followedAuthorKeys := Extend(fooArticleKeys, Keys{
+				"author": Equal(map[string]interface{}{"following": true, "username": "FollowedUser", "bio": "", "image": ""}),
+			})
+			Expect(articles[0].(map[string]interface{})).To(MatchAllKeys(followedAuthorKeys))
+		})
 	})
 
 	Describe("showArticle", func() {
@@ -97,7 +142,7 @@ var _ = Describe("createArticle", func() {
 		})
 
 		It("returns article", func() {
-			Expect(data["article"]).To(MatchAllKeys(articleKeys))
+			Expect(data["article"]).To(MatchAllKeys(helloArticleKeys))
 		})
 	})
 
@@ -128,7 +173,7 @@ var _ = Describe("createArticle", func() {
 			})
 
 			It("returns article", func() {
-				Expect(data["article"]).To(MatchAllKeys(articleKeys))
+				Expect(data["article"]).To(MatchAllKeys(helloArticleKeys))
 			})
 		})
 	})
@@ -154,7 +199,7 @@ var _ = Describe("createArticle", func() {
 
 	Describe("updateArticle", func() {
 		BeforeEach(func() {
-			json := `{"title": "Ice age", "description": "20,000 years before", "body": "All kinds of animals begin immigrating to the south", "tagList": ["drama", "comedy"]}`
+			json := `{"title": "Foo bar", "description": "Foo bar article description!", "body": "Foo bar article body.", "tagList": ["foobar", "variable"]}`
 
 			url := fmt.Sprintf("/api/articles/%s", slug)
 			resp := PutWithToken(url, json, user.ID)
@@ -162,18 +207,10 @@ var _ = Describe("createArticle", func() {
 		})
 
 		It("returns article", func() {
-			Expect(data["article"]).To(MatchAllKeys(Keys{
-				"description":    Equal("20,000 years before"),
-				"body":           Equal("All kinds of animals begin immigrating to the south"),
-				"author":         Equal(map[string]interface{}{"following": false, "username": "hello", "bio": "", "image": ""}),
-				"tagList":        ConsistOf([]interface{}{"drama", "comedy"}),
-				"favoritesCount": Equal(float64(0)),
-				"favorited":      Equal(false),
-				"slug":           HaveSuffix("-ice-age"),
-				"title":          Equal("Ice age"),
-				"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
-				"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
-			}))
+			updatedArticleKeys := Extend(fooArticleKeys, Keys{
+				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
+			})
+			Expect(data["article"]).To(MatchAllKeys(updatedArticleKeys))
 		})
 	})
 
@@ -189,14 +226,3 @@ var _ = Describe("createArticle", func() {
 		})
 	})
 })
-
-func extend(a, b Keys) Keys {
-	res := make(Keys)
-	for k, v := range a {
-		res[k] = v
-	}
-	for k, v := range b {
-		res[k] = v
-	}
-	return res
-}

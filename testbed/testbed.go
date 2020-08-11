@@ -14,6 +14,10 @@ import (
 )
 
 func setToken(req *http.Request, userID uint64) {
+	if userID == 0 {
+		return
+	}
+
 	token, err := org.CreateUserToken(userID, time.Hour)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -37,9 +41,7 @@ func serve(req *http.Request) *httptest.ResponseRecorder {
 }
 
 func Get(url string) *httptest.ResponseRecorder {
-	req := httptest.NewRequest("GET", url, nil)
-	req.Header.Set("Content-Type", "application/json")
-	return serve(req)
+	return GetWithToken(url, 0)
 }
 
 func GetWithToken(url string, userID uint64) *httptest.ResponseRecorder {
@@ -50,9 +52,7 @@ func GetWithToken(url string, userID uint64) *httptest.ResponseRecorder {
 }
 
 func Post(url, data string) *httptest.ResponseRecorder {
-	req := httptest.NewRequest("POST", url, bytes.NewBufferString(data))
-	req.Header.Set("Content-Type", "application/json")
-	return serve(req)
+	return PostWithToken(url, data, 0)
 }
 
 func PostWithToken(url, data string, userID uint64) *httptest.ResponseRecorder {

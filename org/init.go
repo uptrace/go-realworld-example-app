@@ -11,6 +11,7 @@ func init() {
 
 	g.POST("/users", createUser)
 	g.POST("/users/login", loginUser)
+	g.GET("/profiles/:username", showProfile)
 
 	g.Use(MustUserMiddleware)
 

@@ -9,6 +9,7 @@ import (
 	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
 	. "github.com/uptrace/go-realworld-example-app/testbed"
+	. "github.com/uptrace/go-realworld-example-app/testhelper"
 	"github.com/uptrace/go-realworld-example-app/xconfig"
 
 	. "github.com/onsi/ginkgo"
@@ -32,23 +33,22 @@ func init() {
 	ctx = rwe.Init(ctx, cfg)
 }
 
-func assertUser(user map[string]interface{}) {
-	Expect(user).To(MatchAllKeys(Keys{
-		"username":  Equal("wangzitian0"),
-		"email":     Equal("wzt@gg.cn"),
-		"bio":       Equal("bar"),
-		"image":     Equal("img"),
-		"token":     Not(BeEmpty()),
-		"following": Equal(false),
-	}))
-}
-
 var _ = Describe("createUser", func() {
 	var data map[string]interface{}
 
+	var userKeys Keys
+
 	BeforeEach(func() {
-		_, err := rwe.PGMain().Exec("TRUNCATE follow_users, users;")
-		Expect(err).NotTo(HaveOccurred())
+		TruncateUsersTable()
+
+		userKeys = Keys{
+			"username":  Equal("wangzitian0"),
+			"email":     Equal("wzt@gg.cn"),
+			"bio":       Equal("bar"),
+			"image":     Equal("img"),
+			"token":     Not(BeEmpty()),
+			"following": Equal(false),
+		}
 
 		json := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke", "image": "img", "bio": "bar"}`
 		resp := Post("/api/users", json)
@@ -57,7 +57,7 @@ var _ = Describe("createUser", func() {
 	})
 
 	It("creates new user", func() {
-		assertUser(data["user"].(map[string]interface{}))
+		Expect(data["user"]).To(MatchAllKeys(userKeys))
 	})
 
 	Describe("loginUser", func() {
@@ -76,7 +76,7 @@ var _ = Describe("createUser", func() {
 		})
 
 		It("returns user with JWT token", func() {
-			assertUser(data["user"].(map[string]interface{}))
+			Expect(data["user"]).To(MatchAllKeys(userKeys))
 		})
 
 		Describe("currentUser", func() {
@@ -86,7 +86,7 @@ var _ = Describe("createUser", func() {
 			})
 
 			It("returns logged in user", func() {
-				assertUser(data["user"].(map[string]interface{}))
+				Expect(data["user"]).To(MatchAllKeys(userKeys))
 			})
 		})
 
@@ -123,6 +123,10 @@ var _ = Describe("createUser", func() {
 
 				url := fmt.Sprintf("/api/profiles/%s/follow", username)
 				resp = PostWithToken(url, "", user.ID)
+				_ = ParseJSON(resp, 200)
+
+				url = fmt.Sprintf("/api/profiles/%s", username)
+				resp = Get(url)
 				data = ParseJSON(resp, 200)
 			})
 

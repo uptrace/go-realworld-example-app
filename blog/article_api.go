@@ -2,6 +2,7 @@ package blog
 
 import (
 	"math/rand"
+	"net/http"
 	"strconv"
 
 	"github.com/uptrace/go-realworld-example-app/org"
@@ -37,6 +38,13 @@ func listArticles(c *gin.Context) {
 }
 
 func showArticle(c *gin.Context) {
+	slug := c.Param("slug")
+
+	if slug == "feed" {
+		showArticleFeed(c)
+		return
+	}
+
 	f, err := decodeArticleFilter(c)
 	if err != nil {
 		c.Error(err)
@@ -48,13 +56,39 @@ func showArticle(c *gin.Context) {
 		ModelContext(c, article).
 		ColumnExpr("?TableColumns").
 		Apply(f.query).
-		Where("slug = ?", c.Param("slug")).
+		Where("slug = ?", slug).
 		Select(); err != nil {
 		c.Error(err)
 		return
 	}
 
 	c.JSON(200, gin.H{"article": article})
+}
+
+func showArticleFeed(c *gin.Context) {
+	e, ok := c.Get("authErr")
+	if ok {
+		c.AbortWithError(http.StatusUnauthorized, e.(error))
+		return
+	}
+
+	f, err := decodeArticleFilter(c)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	articles := make([]*Article, 0)
+	if err := rwe.PGMain().
+		ModelContext(c, &articles).
+		ColumnExpr("?TableColumns").
+		Apply(f.query).
+		Select(); err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"articles": articles})
 }
 
 func createArticle(c *gin.Context) {
@@ -124,8 +158,11 @@ func updateArticle(c *gin.Context) {
 }
 
 func deleteArticle(c *gin.Context) {
+	user := c.MustGet("user").(*org.User)
+
 	if _, err := rwe.PGMain().
 		ModelContext(c, (*Article)(nil)).
+		Where("author_id = ?", user.ID).
 		Where("slug = ?", c.Param("slug")).
 		Delete(); err != nil {
 		c.Error(err)
