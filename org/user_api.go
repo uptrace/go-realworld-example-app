@@ -141,6 +141,32 @@ func updateUser(c *gin.Context) {
 	c.JSON(200, gin.H{"user": authUser})
 }
 
+func showProfile(c *gin.Context) {
+	u, _ := c.Get("user")
+	authUser, ok := u.(*User)
+	if !ok {
+		authUser = &User{}
+	}
+
+	subq := rwe.PGMain().Model((*FollowUser)(nil)).
+		Where("fu.followed_user_id = u.id").
+		Where("fu.user_id = ?", authUser.ID)
+
+	user := new(User)
+	if err := rwe.PGMain().
+		ModelContext(c, user).
+		ColumnExpr("EXISTS (?) AS following", subq).
+		ColumnExpr("u.*").
+		Where("username = ?", c.Param("username")).
+		Select(); err != nil {
+		c.Error(err)
+		return
+	}
+
+	user.Following = true
+	c.JSON(200, gin.H{"profile": NewProfile(user)})
+}
+
 func followUser(c *gin.Context) {
 	authUser := c.MustGet("user").(*User)
 
