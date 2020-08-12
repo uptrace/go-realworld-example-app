@@ -39,7 +39,7 @@ var _ = Describe("createUser", func() {
 	var userKeys Keys
 
 	BeforeEach(func() {
-		TruncateUsersTable()
+		TruncateDB()
 
 		userKeys = Keys{
 			"username":  Equal("wangzitian0"),
@@ -126,7 +126,7 @@ var _ = Describe("createUser", func() {
 				_ = ParseJSON(resp, 200)
 
 				url = fmt.Sprintf("/api/profiles/%s", username)
-				resp = Get(url)
+				resp = GetWithToken(url, user.ID)
 				data = ParseJSON(resp, 200)
 			})
 

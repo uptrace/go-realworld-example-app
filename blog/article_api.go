@@ -41,7 +41,7 @@ func showArticle(c *gin.Context) {
 	slug := c.Param("slug")
 
 	if slug == "feed" {
-		showArticleFeed(c)
+		listArticlesFeed(c)
 		return
 	}
 
@@ -65,7 +65,7 @@ func showArticle(c *gin.Context) {
 	c.JSON(200, gin.H{"article": article})
 }
 
-func showArticleFeed(c *gin.Context) {
+func listArticlesFeed(c *gin.Context) {
 	e, ok := c.Get("authErr")
 	if ok {
 		c.AbortWithError(http.StatusUnauthorized, e.(error))

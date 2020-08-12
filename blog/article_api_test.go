@@ -36,16 +36,31 @@ func init() {
 	ctx = rwe.Init(ctx, cfg)
 }
 
-var _ = FDescribe("createArticle", func() {
+var _ = Describe("createArticle", func() {
 	var data map[string]interface{}
 	var slug string
 	var user *org.User
 
 	var helloArticleKeys, fooArticleKeys, favoritedArticleKeys Keys
 
+	var createFollowedUser = func() *org.User {
+		followedUser := &org.User{
+			Username:     "FollowedUser",
+			Email:        "foo@bar.com",
+			PasswordHash: "h2",
+		}
+		_, err := rwe.PGMain().Model(followedUser).Insert()
+		Expect(err).NotTo(HaveOccurred())
+
+		url := fmt.Sprintf("/api/profiles/%s/follow", followedUser.Username)
+		resp := PostWithToken(url, "", user.ID)
+		_ = ParseJSON(resp, 200)
+
+		return followedUser
+	}
+
 	BeforeEach(func() {
-		TruncateUsersTable()
-		TruncateArticlesTable()
+		TruncateDB()
 
 		helloArticleKeys = Keys{
 			"title":          Equal("Hello world"),
@@ -60,7 +75,7 @@ var _ = FDescribe("createArticle", func() {
 			"updatedAt":      Equal("0001-01-01T00:00:00Z"),
 		}
 
-		favoritedArticleKeys = Extend(helloArticleKeys, Keys{
+		favoritedArticleKeys = ExtendKeys(helloArticleKeys, Keys{
 			"favorited":      Equal(true),
 			"favoritesCount": Equal(float64(1)),
 		})
@@ -101,20 +116,10 @@ var _ = FDescribe("createArticle", func() {
 
 	Describe("showFeed", func() {
 		BeforeEach(func() {
-			followedUser := &org.User{
-				Username:     "FollowedUser",
-				Email:        "foo@bar.com",
-				PasswordHash: "h2",
-			}
-			_, err := rwe.PGMain().Model(followedUser).Insert()
-			Expect(err).NotTo(HaveOccurred())
-
-			url := fmt.Sprintf("/api/profiles/%s/follow", followedUser.Username)
-			resp := PostWithToken(url, "", user.ID)
-			_ = ParseJSON(resp, 200)
+			followedUser := createFollowedUser()
 
 			json := `{"title": "Foo bar", "description": "Foo bar article description!", "body": "Foo bar article body.", "tagList": ["foobar", "variable"]}`
-			resp = PostWithToken("/api/articles", json, followedUser.ID)
+			resp := PostWithToken("/api/articles", json, followedUser.ID)
 
 			_ = ParseJSON(resp, http.StatusOK)
 
@@ -126,7 +131,7 @@ var _ = FDescribe("createArticle", func() {
 			articles := data["articles"].([]interface{})
 
 			Expect(articles).To(HaveLen(1))
-			followedAuthorKeys := Extend(fooArticleKeys, Keys{
+			followedAuthorKeys := ExtendKeys(fooArticleKeys, Keys{
 				"author": Equal(map[string]interface{}{"following": true, "username": "FollowedUser", "bio": "", "image": ""}),
 			})
 			Expect(articles[0].(map[string]interface{})).To(MatchAllKeys(followedAuthorKeys))
@@ -207,7 +212,7 @@ var _ = FDescribe("createArticle", func() {
 		})
 
 		It("returns article", func() {
-			updatedArticleKeys := Extend(fooArticleKeys, Keys{
+			updatedArticleKeys := ExtendKeys(fooArticleKeys, Keys{
 				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
 			})
 			Expect(data["article"]).To(MatchAllKeys(updatedArticleKeys))
@@ -223,6 +228,89 @@ var _ = FDescribe("createArticle", func() {
 
 		It("returns article", func() {
 			Expect(data).To(BeNil())
+		})
+	})
+
+	Describe("createComment", func() {
+		var commentKeys Keys
+		var commentID uint64
+		var followedUser *org.User
+
+		BeforeEach(func() {
+			commentKeys = Keys{
+				"id":        Not(BeZero()),
+				"body":      Equal("First comment."),
+				"author":    Equal(map[string]interface{}{"following": false, "username": "FollowedUser", "bio": "", "image": ""}),
+				"createdAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
+				"updatedAt": Equal("0001-01-01T00:00:00Z"),
+			}
+
+			followedUser = createFollowedUser()
+
+			json := `{"body": "First comment."}`
+			url := fmt.Sprintf("/api/articles/%s/comments", slug)
+			resp := PostWithToken(url, json, followedUser.ID)
+			data = ParseJSON(resp, 200)
+
+			commentID = uint64(data["comment"].(map[string]interface{})["id"].(float64))
+		})
+
+		It("returns article", func() {
+			Expect(data["comment"]).To(MatchAllKeys(commentKeys))
+		})
+
+		Describe("showComment", func() {
+			BeforeEach(func() {
+				url := fmt.Sprintf("/api/articles/%s/comments/%d", slug, commentID)
+				resp := Get(url)
+				data = ParseJSON(resp, 200)
+			})
+
+			It("returns article", func() {
+				Expect(data["comment"]).To(MatchAllKeys(commentKeys))
+			})
+		})
+
+		Describe("showComment with authentication", func() {
+			BeforeEach(func() {
+				url := fmt.Sprintf("/api/articles/%s/comments/%d", slug, commentID)
+				resp := GetWithToken(url, user.ID)
+				data = ParseJSON(resp, 200)
+			})
+
+			It("returns article", func() {
+				followedCommentKeys := ExtendKeys(commentKeys, Keys{
+					"author": Equal(map[string]interface{}{"following": true, "username": "FollowedUser", "bio": "", "image": ""}),
+				})
+				Expect(data["comment"]).To(MatchAllKeys(followedCommentKeys))
+			})
+		})
+
+		Describe("listArticleComments", func() {
+			BeforeEach(func() {
+				url := fmt.Sprintf("/api/articles/%s/comments", slug)
+				resp := GetWithToken(url, user.ID)
+				data = ParseJSON(resp, 200)
+			})
+
+			It("returns article", func() {
+				followedCommentKeys := ExtendKeys(commentKeys, Keys{
+					"author": Equal(map[string]interface{}{"following": true, "username": "FollowedUser", "bio": "", "image": ""}),
+				})
+				Expect(data["comments"].([]interface{})[0]).To(MatchAllKeys(followedCommentKeys))
+			})
+		})
+
+		Describe("deleteComment", func() {
+			BeforeEach(func() {
+				url := fmt.Sprintf("/api/articles/%s/comments/%d", slug, commentID)
+				resp := DeleteWithToken(url, followedUser.ID)
+				data = ParseJSON(resp, 200)
+			})
+
+			It("returns article", func() {
+				Expect(data).To(BeNil())
+			})
 		})
 	})
 })

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/uptrace/go-realworld-example-app/rwe"
@@ -142,28 +143,34 @@ func updateUser(c *gin.Context) {
 }
 
 func showProfile(c *gin.Context) {
-	u, _ := c.Get("user")
-	authUser, ok := u.(*User)
-	if !ok {
-		authUser = &User{}
-	}
+	followingColumn := func(q *orm.Query) (*orm.Query, error) {
+		u, _ := c.Get("user")
+		authUser, ok := u.(*User)
 
-	subq := rwe.PGMain().Model((*FollowUser)(nil)).
-		Where("fu.followed_user_id = u.id").
-		Where("fu.user_id = ?", authUser.ID)
+		if !ok {
+			q = q.ColumnExpr("false AS following")
+		} else {
+			subq := rwe.PGMain().Model((*FollowUser)(nil)).
+				Where("fu.followed_user_id = u.id").
+				Where("fu.user_id = ?", authUser.ID)
+
+			q = q.ColumnExpr("EXISTS (?) AS following", subq)
+		}
+
+		return q, nil
+	}
 
 	user := new(User)
 	if err := rwe.PGMain().
 		ModelContext(c, user).
-		ColumnExpr("EXISTS (?) AS following", subq).
 		ColumnExpr("u.*").
+		Apply(followingColumn).
 		Where("username = ?", c.Param("username")).
 		Select(); err != nil {
 		c.Error(err)
 		return
 	}
 
-	user.Following = true
 	c.JSON(200, gin.H{"profile": NewProfile(user)})
 }
 

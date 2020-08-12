@@ -1,12 +1,13 @@
 package testhelper
 
 import (
+	"github.com/uptrace/go-realworld-example-app/rwe"
+
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gstruct"
-	"github.com/uptrace/go-realworld-example-app/rwe"
 )
 
-func Extend(a, b Keys) Keys {
+func ExtendKeys(a, b Keys) Keys {
 	res := make(Keys)
 	for k, v := range a {
 		res[k] = v
@@ -17,14 +18,14 @@ func Extend(a, b Keys) Keys {
 	return res
 }
 
-func TruncateUsersTable() {
-	cmd := "TRUNCATE users, favorite_articles, follow_users"
-	_, err := rwe.PGMain().Exec(cmd)
-	Expect(err).NotTo(HaveOccurred())
-}
+func TruncateDB() {
+	cmds := []string{
+		"TRUNCATE users, favorite_articles, follow_users, comments",
+		"TRUNCATE articles, article_tags, favorite_articles, comments",
+	}
 
-func TruncateArticlesTable() {
-	cmd := "TRUNCATE articles, favorite_articles, article_tags"
-	_, err := rwe.PGMain().Exec(cmd)
-	Expect(err).NotTo(HaveOccurred())
+	for _, cmd := range cmds {
+		_, err := rwe.PGMain().Exec(cmd)
+		Expect(err).NotTo(HaveOccurred())
+	}
 }
