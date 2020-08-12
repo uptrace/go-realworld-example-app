@@ -12,6 +12,8 @@ func init() {
 
 	g.GET("/articles", listArticles)
 	g.GET("/articles/:slug", showArticle)
+	g.GET("/articles/:slug/comments", listArticleComments)
+	g.GET("/articles/:slug/comments/:id", showComment)
 
 	g.Use(org.MustUserMiddleware)
 
@@ -21,4 +23,7 @@ func init() {
 
 	g.POST("/articles/:slug/favorite", favoriteArticle)
 	g.DELETE("/articles/:slug/favorite", unfavoriteArticle)
+
+	g.POST("/articles/:slug/comments", createComment)
+	g.DELETE("/articles/:slug/comments/:id", deleteComment)
 }

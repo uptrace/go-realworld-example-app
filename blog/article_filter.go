@@ -56,15 +56,7 @@ func (f *ArticleFilter) query(q *orm.Query) (*orm.Query, error) {
 		q = q.ColumnExpr("EXISTS (?) AS favorited", subq)
 	}
 
-	if f.UserID == 0 {
-		q = q.ColumnExpr("false AS author__following")
-	} else {
-		subq := rwe.PGMain().Model((*org.FollowUser)(nil)).
-			Where("fu.user_id = ?", f.UserID).
-			Where("fu.followed_user_id = a.author_id")
-
-		q = q.ColumnExpr("EXISTS (?) AS author__following", subq)
-	}
+	q.Apply(authorFollowingColumn(f.UserID))
 
 	{
 		subq := rwe.PGMain().Model((*FavoriteArticle)(nil)).
@@ -95,4 +87,20 @@ func (f *ArticleFilter) query(q *orm.Query) (*orm.Query, error) {
 	}
 
 	return q, nil
+}
+
+var authorFollowingColumn = func(userID uint64) func(*orm.Query) (*orm.Query, error) {
+	return func(q *orm.Query) (*orm.Query, error) {
+		if userID == 0 {
+			q = q.ColumnExpr("false AS author__following")
+		} else {
+			subq := rwe.PGMain().Model((*org.FollowUser)(nil)).
+				Where("fu.followed_user_id = author_id").
+				Where("fu.user_id = ?", userID)
+
+			q = q.ColumnExpr("EXISTS (?) AS author__following", subq)
+		}
+
+		return q, nil
+	}
 }
