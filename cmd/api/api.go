@@ -9,6 +9,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	_ "github.com/uptrace/go-realworld-example-app/blog"
 	"github.com/uptrace/go-realworld-example-app/httputil"
 	_ "github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"

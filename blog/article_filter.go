@@ -67,7 +67,7 @@ func (f *ArticleFilter) query(q *orm.Query) (*orm.Query, error) {
 	}
 
 	if f.Author != "" {
-		q = q.Where("author__username = ?", f.Author)
+		q = q.Where("author.username = ?", f.Author)
 	}
 
 	if f.Tag != "" {

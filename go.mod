@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/benbjohnson/clock v1.0.3
+	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-pg/migrations/v8 v8.0.0-beta.1

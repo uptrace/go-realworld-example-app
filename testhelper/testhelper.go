@@ -19,13 +19,8 @@ func ExtendKeys(a, b Keys) Keys {
 }
 
 func TruncateDB() {
-	cmds := []string{
-		"TRUNCATE users, favorite_articles, follow_users, comments",
-		"TRUNCATE articles, article_tags, favorite_articles, comments",
-	}
+	cmd := "TRUNCATE users, favorite_articles, follow_users, comments, articles, article_tags"
+	_, err := rwe.PGMain().Exec(cmd)
+	Expect(err).NotTo(HaveOccurred())
 
-	for _, cmd := range cmds {
-		_, err := rwe.PGMain().Exec(cmd)
-		Expect(err).NotTo(HaveOccurred())
-	}
 }

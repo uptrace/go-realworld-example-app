@@ -18,10 +18,10 @@ CREATE TABLE articles (
   title varchar(500) NOT NULL,
   description varchar(500) NOT NULL,
   body text NOT NULL,
-  author_id int8 NOT NULL,
+  author_id int8 NOT NULL REFERENCES users (id) ON DELETE CASCADE,
 
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 --gopg:split
@@ -68,5 +68,5 @@ CREATE TABLE comments (
   body text NOT NULL,
   
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz
+  updated_at timestamptz NOT NULL DEFAULT now()
 );

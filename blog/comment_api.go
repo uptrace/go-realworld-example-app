@@ -78,14 +78,20 @@ func createComment(c *gin.Context) {
 		return
 	}
 
-	comment := new(Comment)
-	if err := c.BindJSON(comment); err != nil {
+	var in struct {
+		Comment *Comment `json:"comment"`
+	}
+
+	// Not return error on empty Comment
+	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+	comment := in.Comment
 
 	comment.AuthorID = user.ID
 	comment.ArticleID = article.ID
 	comment.CreatedAt = rwe.Clock.Now()
+	comment.UpdatedAt = rwe.Clock.Now()
 
 	if _, err := rwe.PGMain().
 		ModelContext(c, comment).

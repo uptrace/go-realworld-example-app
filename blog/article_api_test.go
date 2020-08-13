@@ -72,7 +72,7 @@ var _ = Describe("createArticle", func() {
 			"favoritesCount": Equal(float64(0)),
 			"favorited":      Equal(false),
 			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
-			"updatedAt":      Equal("0001-01-01T00:00:00Z"),
+			"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
 		}
 
 		favoritedArticleKeys = ExtendKeys(helloArticleKeys, Keys{
@@ -90,7 +90,7 @@ var _ = Describe("createArticle", func() {
 			"favoritesCount": Equal(float64(0)),
 			"favorited":      Equal(false),
 			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
-			"updatedAt":      Equal("0001-01-01T00:00:00Z"),
+			"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
 		}
 
 		user = &org.User{
@@ -103,7 +103,7 @@ var _ = Describe("createArticle", func() {
 	})
 
 	BeforeEach(func() {
-		json := `{"title": "Hello world", "description": "Hello world article description!", "body": "Hello world article body.", "tagList": ["greeting", "welcome", "salut"]}`
+		json := `{"article": {"title": "Hello world", "description": "Hello world article description!", "body": "Hello world article body.", "tagList": ["greeting", "welcome", "salut"]}}`
 		resp := PostWithToken("/api/articles", json, user.ID)
 
 		data = ParseJSON(resp, http.StatusOK)
@@ -118,7 +118,7 @@ var _ = Describe("createArticle", func() {
 		BeforeEach(func() {
 			followedUser := createFollowedUser()
 
-			json := `{"title": "Foo bar", "description": "Foo bar article description!", "body": "Foo bar article body.", "tagList": ["foobar", "variable"]}`
+			json := `{"article": {"title": "Foo bar", "description": "Foo bar article description!", "body": "Foo bar article body.", "tagList": ["foobar", "variable"]}}`
 			resp := PostWithToken("/api/articles", json, followedUser.ID)
 
 			_ = ParseJSON(resp, http.StatusOK)
@@ -147,6 +147,19 @@ var _ = Describe("createArticle", func() {
 		})
 
 		It("returns article", func() {
+			Expect(data["article"]).To(MatchAllKeys(helloArticleKeys))
+		})
+	})
+
+	Describe("listArticles", func() {
+		BeforeEach(func() {
+			url := fmt.Sprintf("/api/articles/%s?author=CurrentUser", slug)
+			resp := Get(url)
+
+			data = ParseJSON(resp, http.StatusOK)
+		})
+
+		It("returns articles by author", func() {
 			Expect(data["article"]).To(MatchAllKeys(helloArticleKeys))
 		})
 	})
@@ -204,7 +217,7 @@ var _ = Describe("createArticle", func() {
 
 	Describe("updateArticle", func() {
 		BeforeEach(func() {
-			json := `{"title": "Foo bar", "description": "Foo bar article description!", "body": "Foo bar article body.", "tagList": ["foobar", "variable"]}`
+			json := `{"article": {"title": "Foo bar", "description": "Foo bar article description!", "body": "Foo bar article body.", "tagList": []}}`
 
 			url := fmt.Sprintf("/api/articles/%s", slug)
 			resp := PutWithToken(url, json, user.ID)
@@ -213,6 +226,8 @@ var _ = Describe("createArticle", func() {
 
 		It("returns article", func() {
 			updatedArticleKeys := ExtendKeys(fooArticleKeys, Keys{
+				"slug":      HaveSuffix("-hello-world"),
+				"tagList":   Equal([]interface{}{}),
 				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
 			})
 			Expect(data["article"]).To(MatchAllKeys(updatedArticleKeys))
@@ -242,12 +257,12 @@ var _ = Describe("createArticle", func() {
 				"body":      Equal("First comment."),
 				"author":    Equal(map[string]interface{}{"following": false, "username": "FollowedUser", "bio": "", "image": ""}),
 				"createdAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
-				"updatedAt": Equal("0001-01-01T00:00:00Z"),
+				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
 			}
 
 			followedUser = createFollowedUser()
 
-			json := `{"body": "First comment."}`
+			json := `{"comment": {"body": "First comment."}}`
 			url := fmt.Sprintf("/api/articles/%s/comments", slug)
 			resp := PostWithToken(url, json, followedUser.ID)
 			data = ParseJSON(resp, 200)
@@ -255,7 +270,7 @@ var _ = Describe("createArticle", func() {
 			commentID = uint64(data["comment"].(map[string]interface{})["id"].(float64))
 		})
 
-		It("returns article", func() {
+		It("returns created comment to article", func() {
 			Expect(data["comment"]).To(MatchAllKeys(commentKeys))
 		})
 
@@ -266,7 +281,7 @@ var _ = Describe("createArticle", func() {
 				data = ParseJSON(resp, 200)
 			})
 
-			It("returns article", func() {
+			It("returns comment to article", func() {
 				Expect(data["comment"]).To(MatchAllKeys(commentKeys))
 			})
 		})
@@ -278,7 +293,7 @@ var _ = Describe("createArticle", func() {
 				data = ParseJSON(resp, 200)
 			})
 
-			It("returns article", func() {
+			It("returns comment to article", func() {
 				followedCommentKeys := ExtendKeys(commentKeys, Keys{
 					"author": Equal(map[string]interface{}{"following": true, "username": "FollowedUser", "bio": "", "image": ""}),
 				})
@@ -293,7 +308,7 @@ var _ = Describe("createArticle", func() {
 				data = ParseJSON(resp, 200)
 			})
 
-			It("returns article", func() {
+			It("returns article comments", func() {
 				followedCommentKeys := ExtendKeys(commentKeys, Keys{
 					"author": Equal(map[string]interface{}{"following": true, "username": "FollowedUser", "bio": "", "image": ""}),
 				})
@@ -308,7 +323,7 @@ var _ = Describe("createArticle", func() {
 				data = ParseJSON(resp, 200)
 			})
 
-			It("returns article", func() {
+			It("deletes comment", func() {
 				Expect(data).To(BeNil())
 			})
 		})

@@ -30,10 +30,14 @@ func currentUser(c *gin.Context) {
 }
 
 func createUser(c *gin.Context) {
-	user := new(User)
-	if err := c.BindJSON(user); err != nil {
+	var in struct {
+		User *User `json:"user"`
+	}
+
+	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+	user := in.User
 
 	var err error
 	user.PasswordHash, err = hashPassword(user.Password)
@@ -68,8 +72,10 @@ func hashPassword(pass string) (string, error) {
 
 func loginUser(c *gin.Context) {
 	var in struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
+		User struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		} `json:"user"`
 	}
 	if err := c.BindJSON(&in); err != nil {
 		return
@@ -78,7 +84,7 @@ func loginUser(c *gin.Context) {
 	user := new(User)
 	if err := rwe.PGMain().
 		ModelContext(c.Request.Context(), user).
-		Where("email = ?", in.Email).
+		Where("email = ?", in.User.Email).
 		Select(); err != nil {
 		if err == pg.ErrNoRows {
 			err = errUserNotFound
@@ -88,7 +94,7 @@ func loginUser(c *gin.Context) {
 		return
 	}
 
-	if err := comparePasswords(user.PasswordHash, in.Password); err != nil {
+	if err := comparePasswords(user.PasswordHash, in.User.Password); err != nil {
 		c.Error(err)
 		return
 	}
@@ -111,10 +117,14 @@ func comparePasswords(hash, pass string) error {
 }
 
 func updateUser(c *gin.Context) {
-	user := new(User)
-	if err := c.BindJSON(user); err != nil {
+	var in struct {
+		User *User `json:"user"`
+	}
+
+	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+	user := in.User
 
 	var err error
 	user.PasswordHash, err = hashPassword(user.Password)

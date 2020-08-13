@@ -50,7 +50,7 @@ var _ = Describe("createUser", func() {
 			"following": Equal(false),
 		}
 
-		json := `{"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke", "image": "img", "bio": "bar"}`
+		json := `{"user": {"username": "wangzitian0","email": "wzt@gg.cn","password": "jakejxke", "image": "img", "bio": "bar"}}`
 		resp := Post("/api/users", json)
 
 		data = ParseJSON(resp, http.StatusOK)
@@ -64,7 +64,7 @@ var _ = Describe("createUser", func() {
 		var user *org.User
 
 		BeforeEach(func() {
-			json := `{"email": "wzt@gg.cn","password": "jakejxke"}`
+			json := `{"user": {"email": "wzt@gg.cn","password": "jakejxke"}}`
 			resp := Post("/api/users/login", json)
 
 			data = ParseJSON(resp, http.StatusOK)
@@ -92,8 +92,8 @@ var _ = Describe("createUser", func() {
 
 		Describe("updateUser", func() {
 			BeforeEach(func() {
-				json := `{"username": "hello","email": "foo@bar.com", "image": "bar", "bio": "foo"}`
-				resp := PutWithToken("/api/users", json, user.ID)
+				json := `{"user": {"username": "hello","email": "foo@bar.com", "image": "bar", "bio": "foo"}}`
+				resp := PutWithToken("/api/user", json, user.ID)
 				data = ParseJSON(resp, http.StatusOK)
 			})
 
@@ -114,7 +114,7 @@ var _ = Describe("createUser", func() {
 			var username string
 
 			BeforeEach(func() {
-				json := `{"username": "hello","email": "foo@bar.com","password": "pwd"}`
+				json := `{"user": {"username": "hello","email": "foo@bar.com","password": "pwd"}}`
 				resp := Post("/api/users", json)
 
 				data = ParseJSON(resp, http.StatusOK)

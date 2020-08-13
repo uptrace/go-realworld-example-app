@@ -34,7 +34,10 @@ func listArticles(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"articles": articles})
+	c.JSON(200, gin.H{
+		"articles":      articles,
+		"articlesCount": len(articles),
+	})
 }
 
 func showArticle(c *gin.Context) {
@@ -45,10 +48,19 @@ func showArticle(c *gin.Context) {
 		return
 	}
 
-	f, err := decodeArticleFilter(c)
+	article, err := selectArticleByFilter(c)
 	if err != nil {
 		c.Error(err)
 		return
+	}
+
+	c.JSON(200, gin.H{"article": article})
+}
+
+func selectArticleByFilter(c *gin.Context) (*Article, error) {
+	f, err := decodeArticleFilter(c)
+	if err != nil {
+		return nil, err
 	}
 
 	article := new(Article)
@@ -56,13 +68,11 @@ func showArticle(c *gin.Context) {
 		ModelContext(c, article).
 		ColumnExpr("?TableColumns").
 		Apply(f.query).
-		Where("slug = ?", slug).
 		Select(); err != nil {
-		c.Error(err)
-		return
+		return nil, err
 	}
 
-	c.JSON(200, gin.H{"article": article})
+	return article, nil
 }
 
 func listArticlesFeed(c *gin.Context) {
@@ -88,20 +98,28 @@ func listArticlesFeed(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, gin.H{"articles": articles})
+	c.JSON(200, gin.H{
+		"articles":      articles,
+		"articlesCount": len(articles),
+	})
 }
 
 func createArticle(c *gin.Context) {
 	user := c.MustGet("user").(*org.User)
 
-	article := new(Article)
-	if err := c.BindJSON(article); err != nil {
+	var in struct {
+		Article *Article `json:"article"`
+	}
+
+	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+	article := in.Article
 
 	article.Slug = makeSlug(article.Title)
 	article.AuthorID = user.ID
 	article.CreatedAt = rwe.Clock.Now()
+	article.UpdatedAt = rwe.Clock.Now()
 
 	if _, err := rwe.PGMain().
 		ModelContext(c, article).
@@ -122,15 +140,18 @@ func createArticle(c *gin.Context) {
 func updateArticle(c *gin.Context) {
 	user := c.MustGet("user").(*org.User)
 
-	article := new(Article)
-	if err := c.BindJSON(article); err != nil {
+	var in struct {
+		Article *Article `json:"article"`
+	}
+
+	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+	article := in.Article
 
 	if _, err := rwe.PGMain().
 		ModelContext(c, article).
 		Set("title = ?", article.Title).
-		Set("slug = ?", makeSlug(article.Title)).
 		Set("description = ?", article.Description).
 		Set("body = ?", article.Body).
 		Set("updated_at = ?", rwe.Clock.Now()).
@@ -196,7 +217,8 @@ func createTags(c *gin.Context, article *Article) error {
 
 func favoriteArticle(c *gin.Context) {
 	user := c.MustGet("user").(*org.User)
-	article, err := SelectArticle(c, c.Param("slug"))
+
+	article, err := selectArticleByFilter(c)
 	if err != nil {
 		c.Error(err)
 		return
@@ -206,32 +228,43 @@ func favoriteArticle(c *gin.Context) {
 		UserID:    user.ID,
 		ArticleID: article.ID,
 	}
-	if _, err := rwe.PGMain().
+	res, err := rwe.PGMain().
 		ModelContext(c, favoriteArticle).
-		Insert(); err != nil {
-		c.Error(err)
-		return
-	}
-
-	c.JSON(200, gin.H{"article": article})
-}
-
-func unfavoriteArticle(c *gin.Context) {
-	user := c.MustGet("user").(*org.User)
-	article, err := SelectArticle(c, c.Param("slug"))
+		Insert()
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
-	if _, err := rwe.PGMain().
-		ModelContext(c, (*FavoriteArticle)(nil)).
-		Where("user_id = ?", user.ID).
-		Where("article_id = ?", article.ID).
-		Delete(); err != nil {
+	if res.RowsAffected() != 0 {
+		article.Favorited = true
+		article.FavoritesCount = article.FavoritesCount + 1
+	}
+	c.JSON(200, gin.H{"article": article})
+}
+
+func unfavoriteArticle(c *gin.Context) {
+	user := c.MustGet("user").(*org.User)
+
+	article, err := selectArticleByFilter(c)
+	if err != nil {
 		c.Error(err)
 		return
 	}
 
+	res, err := rwe.PGMain().
+		ModelContext(c, (*FavoriteArticle)(nil)).
+		Where("user_id = ?", user.ID).
+		Where("article_id = ?", article.ID).
+		Delete()
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	if res.RowsAffected() != 0 {
+		article.Favorited = false
+		article.FavoritesCount = article.FavoritesCount - 1
+	}
 	c.JSON(200, gin.H{"article": article})
 }
