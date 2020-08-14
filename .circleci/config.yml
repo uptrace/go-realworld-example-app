@@ -35,6 +35,7 @@ jobs:
           command: |
             echo 0.0.0.0 dbhost | sudo tee -a /etc/hosts
             sudo apt-get install -y postgresql-client
+            sudo apt-get install -y redis-server
             make db_reset
 
       - run:
