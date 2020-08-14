@@ -1,24 +1,42 @@
-# Golang CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
   build:
     docker:
       - image: circleci/golang:1.15
+
       - image: circleci/postgres:12
         environment:
           POSTGRES_USER: postgres
           POSTGRES_DB: real_world_dev
 
-    #### TEMPLATE_NOTE: go expects specific checkout path representing url
-    #### expecting it in the form of
-    ####   /go/src/github.com/circleci/go-tool
-    ####   /go/src/bitbucket.org/circleci/go-tool
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+
     steps:
       - checkout
 
-      # specify any bash command here prefixed with `run: `
-      - run: go get -v -t -d ./...
-      - run: go test -v ./...
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go.sum" }}
+
+      - run: echo 0.0.0.0 dbhost | sudo tee -a /etc/hosts
+
+      - run:
+          name: wait for Postgres
+          command: dockerize -wait tcp://dbhost:5432 -timeout 2m
+
+      - run:
+          name: pre tests
+          command: |
+            echo 0.0.0.0 dbhost | sudo tee -a /etc/hosts
+            sudo apt-get install -y postgresql-client
+            make db_reset
+
+      - run:
+          name: tests
+          command: |
+            go test ./org
+            go test ./blog
+
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
