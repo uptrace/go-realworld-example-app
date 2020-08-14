@@ -15,10 +15,6 @@ jobs:
     steps:
       - checkout
 
-      - restore_cache:
-          keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
-
       - run: echo 0.0.0.0 dbhost | sudo tee -a /etc/hosts
 
       - run:
@@ -43,8 +39,3 @@ jobs:
           command: |
             go test ./org
             go test ./blog
-
-      - save_cache:
-          key: go-mod-v1-{{ checksum "go.sum" }}
-          paths:
-            - "/go/pkg/mod"
