@@ -37,6 +37,12 @@ func createUser(c *gin.Context) {
 	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+
+	if in.User == nil {
+		c.Error(errors.New(`JSON field "user" is required`))
+		return
+	}
+
 	user := in.User
 
 	var err error
@@ -72,12 +78,17 @@ func hashPassword(pass string) (string, error) {
 
 func loginUser(c *gin.Context) {
 	var in struct {
-		User struct {
+		User *struct {
 			Email    string `json:"email"`
 			Password string `json:"password"`
 		} `json:"user"`
 	}
 	if err := c.BindJSON(&in); err != nil {
+		return
+	}
+
+	if in.User == nil {
+		c.Error(errors.New(`JSON field "user" is required`))
 		return
 	}
 
@@ -124,6 +135,12 @@ func updateUser(c *gin.Context) {
 	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+
+	if in.User == nil {
+		c.Error(errors.New(`JSON field "user" is required`))
+		return
+	}
+
 	user := in.User
 
 	var err error

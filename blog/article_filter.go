@@ -2,6 +2,7 @@ package blog
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"github.com/go-pg/urlstruct"
 	"github.com/uptrace/go-realworld-example-app/org"
@@ -39,7 +40,7 @@ func (f *ArticleFilter) query(q *orm.Query) (*orm.Query, error) {
 	q = q.Relation("Author")
 
 	{
-		subq := rwe.PGMain().Model((*ArticleTag)(nil)).
+		subq := pg.Model((*ArticleTag)(nil)).
 			ColumnExpr("array_agg(t.tag)::text[]").
 			Where("t.article_id = a.id")
 
@@ -49,7 +50,7 @@ func (f *ArticleFilter) query(q *orm.Query) (*orm.Query, error) {
 	if f.UserID == 0 {
 		q = q.ColumnExpr("false AS favorited")
 	} else {
-		subq := rwe.PGMain().Model((*FavoriteArticle)(nil)).
+		subq := pg.Model((*FavoriteArticle)(nil)).
 			Where("fa.article_id = a.id").
 			Where("fa.user_id = ?", f.UserID)
 
@@ -59,7 +60,7 @@ func (f *ArticleFilter) query(q *orm.Query) (*orm.Query, error) {
 	q.Apply(authorFollowingColumn(f.UserID))
 
 	{
-		subq := rwe.PGMain().Model((*FavoriteArticle)(nil)).
+		subq := pg.Model((*FavoriteArticle)(nil)).
 			ColumnExpr("count(*)").
 			Where("fa.article_id = a.id")
 
@@ -71,13 +72,16 @@ func (f *ArticleFilter) query(q *orm.Query) (*orm.Query, error) {
 	}
 
 	if f.Tag != "" {
-		q = q.
-			Join("JOIN article_tags AS t ON t.article_id = a.id").
+		subq := pg.Model((*ArticleTag)(nil)).
+			Distinct().
+			ColumnExpr("t.article_id").
 			Where("t.tag = ?", f.Tag)
+
+		q = q.Where("a.id IN (?)", subq)
 	}
 
 	if f.Feed {
-		subq := rwe.PGMain().Model((*org.FollowUser)(nil)).
+		subq := pg.Model((*org.FollowUser)(nil)).
 			ColumnExpr("fu.followed_user_id").
 			Where("fu.user_id = ?", f.UserID)
 

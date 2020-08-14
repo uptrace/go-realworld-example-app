@@ -11,7 +11,6 @@ import (
 	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
 	. "github.com/uptrace/go-realworld-example-app/testbed"
-	. "github.com/uptrace/go-realworld-example-app/testhelper"
 	"github.com/uptrace/go-realworld-example-app/xconfig"
 
 	. "github.com/onsi/ginkgo"
@@ -25,7 +24,10 @@ func TestGinkgo(t *testing.T) {
 }
 
 func init() {
-	rwe.Clock = clock.NewMock()
+	mock := clock.NewMock()
+	mock.Set(time.Date(2020, time.January, 1, 2, 3, 4, 5000, time.UTC))
+	rwe.Clock = mock
+
 	ctx := context.Background()
 
 	cfg, err := xconfig.LoadConfig("test")
@@ -43,7 +45,7 @@ var _ = Describe("createArticle", func() {
 
 	var helloArticleKeys, fooArticleKeys, favoritedArticleKeys Keys
 
-	var createFollowedUser = func() *org.User {
+	createFollowedUser := func() *org.User {
 		followedUser := &org.User{
 			Username:     "FollowedUser",
 			Email:        "foo@bar.com",
@@ -64,15 +66,15 @@ var _ = Describe("createArticle", func() {
 
 		helloArticleKeys = Keys{
 			"title":          Equal("Hello world"),
-			"slug":           HaveSuffix("-hello-world"),
+			"slug":           HavePrefix("hello-world-"),
 			"description":    Equal("Hello world article description!"),
 			"body":           Equal("Hello world article body."),
 			"author":         Equal(map[string]interface{}{"following": false, "username": "CurrentUser", "bio": "", "image": ""}),
 			"tagList":        ConsistOf([]interface{}{"greeting", "welcome", "salut"}),
 			"favoritesCount": Equal(float64(0)),
 			"favorited":      Equal(false),
-			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
-			"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
+			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339Nano)),
+			"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339Nano)),
 		}
 
 		favoritedArticleKeys = ExtendKeys(helloArticleKeys, Keys{
@@ -82,15 +84,15 @@ var _ = Describe("createArticle", func() {
 
 		fooArticleKeys = Keys{
 			"title":          Equal("Foo bar"),
-			"slug":           HaveSuffix("-foo-bar"),
+			"slug":           HavePrefix("foo-bar-"),
 			"description":    Equal("Foo bar article description!"),
 			"body":           Equal("Foo bar article body."),
 			"author":         Equal(map[string]interface{}{"following": false, "username": "CurrentUser", "bio": "", "image": ""}),
 			"tagList":        ConsistOf([]interface{}{"foobar", "variable"}),
 			"favoritesCount": Equal(float64(0)),
 			"favorited":      Equal(false),
-			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
-			"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
+			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339Nano)),
+			"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339Nano)),
 		}
 
 		user = &org.User{
@@ -226,9 +228,9 @@ var _ = Describe("createArticle", func() {
 
 		It("returns article", func() {
 			updatedArticleKeys := ExtendKeys(fooArticleKeys, Keys{
-				"slug":      HaveSuffix("-hello-world"),
+				"slug":      HavePrefix("hello-world-"),
 				"tagList":   Equal([]interface{}{}),
-				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
+				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339Nano)),
 			})
 			Expect(data["article"]).To(MatchAllKeys(updatedArticleKeys))
 		})
@@ -256,8 +258,8 @@ var _ = Describe("createArticle", func() {
 				"id":        Not(BeZero()),
 				"body":      Equal("First comment."),
 				"author":    Equal(map[string]interface{}{"following": false, "username": "FollowedUser", "bio": "", "image": ""}),
-				"createdAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
-				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
+				"createdAt": Equal(rwe.Clock.Now().Format(time.RFC3339Nano)),
+				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339Nano)),
 			}
 
 			followedUser = createFollowedUser()
@@ -326,6 +328,21 @@ var _ = Describe("createArticle", func() {
 			It("deletes comment", func() {
 				Expect(data).To(BeNil())
 			})
+		})
+	})
+
+	Describe("listTags", func() {
+		BeforeEach(func() {
+			resp := Get("/api/tags")
+			data = ParseJSON(resp, 200)
+		})
+
+		It("returns tags", func() {
+			Expect(data["tags"]).To(ConsistOf([]string{
+				"greeting",
+				"salut",
+				"welcome",
+			}))
 		})
 	})
 })

@@ -1,14 +1,13 @@
-package testhelper
+package testbed
 
 import (
-	"github.com/uptrace/go-realworld-example-app/rwe"
-
 	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gstruct"
+	"github.com/onsi/gomega/gstruct"
+	"github.com/uptrace/go-realworld-example-app/rwe"
 )
 
-func ExtendKeys(a, b Keys) Keys {
-	res := make(Keys)
+func ExtendKeys(a, b gstruct.Keys) gstruct.Keys {
+	res := make(gstruct.Keys)
 	for k, v := range a {
 		res[k] = v
 	}
@@ -22,5 +21,4 @@ func TruncateDB() {
 	cmd := "TRUNCATE users, favorite_articles, follow_users, comments, articles, article_tags"
 	_, err := rwe.PGMain().Exec(cmd)
 	Expect(err).NotTo(HaveOccurred())
-
 }
