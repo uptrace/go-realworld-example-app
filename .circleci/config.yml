@@ -8,6 +8,7 @@ jobs:
         environment:
           POSTGRES_USER: postgres
           POSTGRES_DB: real_world_dev
+          POSTGRES_HOST_AUTH_METHODL: trust
 
 
     steps:
