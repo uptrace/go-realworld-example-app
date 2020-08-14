@@ -74,6 +74,10 @@ func selectArticleByFilter(c *gin.Context) (*Article, error) {
 		return nil, err
 	}
 
+	if article.TagList == nil {
+		article.TagList = make([]string, 0)
+	}
+
 	return article, nil
 }
 
@@ -118,7 +122,7 @@ func createArticle(c *gin.Context) {
 	}
 
 	if in.Article == nil {
-		c.Error(errors.New("Article is required"))
+		c.Error(errors.New(`JSON field "article" is required`))
 		return
 	}
 
@@ -126,8 +130,8 @@ func createArticle(c *gin.Context) {
 
 	article.Slug = makeSlug(article.Title)
 	article.AuthorID = user.ID
-	article.CreatedAt = rwe.Clock.Now()
-	article.UpdatedAt = rwe.Clock.Now()
+	article.CreatedAt = rwe.Clock.Now().UTC()
+	article.UpdatedAt = rwe.Clock.Now().UTC()
 
 	if _, err := rwe.PGMain().
 		ModelContext(c, article).
@@ -157,7 +161,7 @@ func updateArticle(c *gin.Context) {
 	}
 
 	if in.Article == nil {
-		c.Error(errors.New("Article is required"))
+		c.Error(errors.New(`JSON field "article" is required`))
 		return
 	}
 
@@ -168,7 +172,7 @@ func updateArticle(c *gin.Context) {
 		Set("title = ?", article.Title).
 		Set("description = ?", article.Description).
 		Set("body = ?", article.Body).
-		Set("updated_at = ?", rwe.Clock.Now()).
+		Set("updated_at = ?", rwe.Clock.Now().UTC()).
 		Where("slug = ?", c.Param("slug")).
 		Returning("*").
 		Update(); err != nil {
@@ -186,6 +190,10 @@ func updateArticle(c *gin.Context) {
 	if err := createTags(c, article); err != nil {
 		c.Error(err)
 		return
+	}
+
+	if article.TagList == nil {
+		article.TagList = make([]string, 0)
 	}
 
 	article.Author = org.NewProfile(user)
@@ -286,12 +294,10 @@ func unfavoriteArticle(c *gin.Context) {
 func listTags(c *gin.Context) {
 	tags := make([]string, 0)
 	if err := rwe.PGMain().ModelContext(c, (*ArticleTag)(nil)).
+		// ColumnExpr("distinct(tag)").
 		ColumnExpr("tag").
-		ColumnExpr("count(tag) as tag_count").
 		GroupExpr("tag").
-		OrderExpr("tag_count DESC").
-		WrapWith("tag_list").
-		TableExpr("tag_list").
+		OrderExpr("count(tag) DESC").
 		ColumnExpr("tag").
 		Select(&tags); err != nil && err != pg.ErrNoRows {
 		c.Error(err)

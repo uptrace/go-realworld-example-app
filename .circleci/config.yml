@@ -1,3 +1,4 @@
+
 version: 2
 jobs:
   build:
@@ -29,13 +30,20 @@ jobs:
       - run:
           name: pre tests
           command: |
+            sudo apt-get install npm
+            npm install npx
             echo 0.0.0.0 dbhost | sudo tee -a /etc/hosts
             sudo apt-get install -y postgresql-client
             sudo apt-get install -y redis-server
             make db_migrate
+
+            go run cmd/api/*.go -env=dev
 
       - run:
           name: tests
           command: |
             go test ./org
             go test ./blog
+
+            go run cmd/api/*.go -env=dev &
+            APIURL=http://localhost:8888/api ./tests/run-api-tests.sh

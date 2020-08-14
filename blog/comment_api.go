@@ -88,7 +88,7 @@ func createComment(c *gin.Context) {
 	}
 
 	if in.Comment == nil {
-		c.Error(errors.New("Comment is required"))
+		c.Error(errors.New(`JSON field "comment" is required`))
 		return
 	}
 
@@ -96,8 +96,8 @@ func createComment(c *gin.Context) {
 
 	comment.AuthorID = user.ID
 	comment.ArticleID = article.ID
-	comment.CreatedAt = rwe.Clock.Now()
-	comment.UpdatedAt = rwe.Clock.Now()
+	comment.CreatedAt = rwe.Clock.Now().UTC()
+	comment.UpdatedAt = rwe.Clock.Now().UTC()
 
 	if _, err := rwe.PGMain().
 		ModelContext(c, comment).

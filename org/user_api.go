@@ -39,7 +39,7 @@ func createUser(c *gin.Context) {
 	}
 
 	if in.User == nil {
-		c.Error(errors.New("User is required"))
+		c.Error(errors.New(`JSON field "user" is required`))
 		return
 	}
 
@@ -88,7 +88,7 @@ func loginUser(c *gin.Context) {
 	}
 
 	if in.User == nil {
-		c.Error(errors.New("User is required"))
+		c.Error(errors.New(`JSON field "user" is required`))
 		return
 	}
 
@@ -137,7 +137,7 @@ func updateUser(c *gin.Context) {
 	}
 
 	if in.User == nil {
-		c.Error(errors.New("User is required"))
+		c.Error(errors.New(`JSON field "user" is required`))
 		return
 	}
 

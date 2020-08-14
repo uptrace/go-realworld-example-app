@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/uptrace/go-realworld-example-app/blog"
 	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
 	. "github.com/uptrace/go-realworld-example-app/testbed"
@@ -71,8 +71,8 @@ var _ = Describe("createArticle", func() {
 			"tagList":        ConsistOf([]interface{}{"greeting", "welcome", "salut"}),
 			"favoritesCount": Equal(float64(0)),
 			"favorited":      Equal(false),
-			"createdAt":      Equal(rwe.Clock.Now().UTC().Format(blog.TimeFormatStr)),
-			"updatedAt":      Equal(rwe.Clock.Now().UTC().Format(blog.TimeFormatStr)),
+			"createdAt":      Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
+			"updatedAt":      Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
 		}
 
 		favoritedArticleKeys = ExtendKeys(helloArticleKeys, Keys{
@@ -89,8 +89,8 @@ var _ = Describe("createArticle", func() {
 			"tagList":        ConsistOf([]interface{}{"foobar", "variable"}),
 			"favoritesCount": Equal(float64(0)),
 			"favorited":      Equal(false),
-			"createdAt":      Equal(rwe.Clock.Now().UTC().Format(blog.TimeFormatStr)),
-			"updatedAt":      Equal(rwe.Clock.Now().UTC().Format(blog.TimeFormatStr)),
+			"createdAt":      Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
+			"updatedAt":      Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
 		}
 
 		user = &org.User{
@@ -228,7 +228,7 @@ var _ = Describe("createArticle", func() {
 			updatedArticleKeys := ExtendKeys(fooArticleKeys, Keys{
 				"slug":      HaveSuffix("-hello-world"),
 				"tagList":   Equal([]interface{}{}),
-				"updatedAt": Equal(rwe.Clock.Now().UTC().Format(blog.TimeFormatStr)),
+				"updatedAt": Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
 			})
 			Expect(data["article"]).To(MatchAllKeys(updatedArticleKeys))
 		})
@@ -256,8 +256,8 @@ var _ = Describe("createArticle", func() {
 				"id":        Not(BeZero()),
 				"body":      Equal("First comment."),
 				"author":    Equal(map[string]interface{}{"following": false, "username": "FollowedUser", "bio": "", "image": ""}),
-				"createdAt": Equal(rwe.Clock.Now().UTC().Format(blog.TimeFormatStr)),
-				"updatedAt": Equal(rwe.Clock.Now().UTC().Format(blog.TimeFormatStr)),
+				"createdAt": Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
+				"updatedAt": Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
 			}
 
 			followedUser = createFollowedUser()
@@ -336,7 +336,7 @@ var _ = Describe("createArticle", func() {
 		})
 
 		It("returns tags", func() {
-			Expect(data["tags"]).To(ConsistOf([]string{"salut", "greeting", "welcome"}))
+			Expect(data["tags"]).To(ConsistOf([]string{"salut", "salut", "greeting", "greeting", "welcome", "welcome"}))
 		})
 	})
 })
