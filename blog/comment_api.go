@@ -1,6 +1,7 @@
 package blog
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -82,10 +83,15 @@ func createComment(c *gin.Context) {
 		Comment *Comment `json:"comment"`
 	}
 
-	// Not return error on empty Comment
 	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+
+	if in.Comment == nil {
+		c.Error(errors.New("Comment is required"))
+		return
+	}
+
 	comment := in.Comment
 
 	comment.AuthorID = user.ID

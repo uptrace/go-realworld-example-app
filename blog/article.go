@@ -2,11 +2,14 @@ package blog
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
 )
+
+const TimeFormatStr = "2006-01-02T15:04:05.999Z"
 
 type Article struct {
 	tableName struct{} `pg:"articles,alias:a"`
@@ -28,6 +31,24 @@ type Article struct {
 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (a *Article) MarshalJSON() ([]byte, error) {
+	type Alias Article
+
+	if a.TagList == nil {
+		a.TagList = make([]string, 0)
+	}
+
+	return json.Marshal(&struct {
+		*Alias
+		CreatedAt string `json:"createdAt"`
+		UpdatedAt string `json:"updatedAt"`
+	}{
+		Alias:     (*Alias)(a),
+		CreatedAt: a.CreatedAt.UTC().Format(TimeFormatStr),
+		UpdatedAt: a.UpdatedAt.UTC().Format(TimeFormatStr),
+	})
 }
 
 type ArticleTag struct {

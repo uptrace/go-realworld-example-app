@@ -1,6 +1,7 @@
 package blog
 
 import (
+	"errors"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -9,6 +10,7 @@ import (
 	"github.com/uptrace/go-realworld-example-app/rwe"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-pg/pg/v10"
 	"github.com/gosimple/slug"
 )
 
@@ -114,6 +116,12 @@ func createArticle(c *gin.Context) {
 	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+
+	if in.Article == nil {
+		c.Error(errors.New("Article is required"))
+		return
+	}
+
 	article := in.Article
 
 	article.Slug = makeSlug(article.Title)
@@ -147,6 +155,12 @@ func updateArticle(c *gin.Context) {
 	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+
+	if in.Article == nil {
+		c.Error(errors.New("Article is required"))
+		return
+	}
+
 	article := in.Article
 
 	if _, err := rwe.PGMain().
@@ -267,4 +281,22 @@ func unfavoriteArticle(c *gin.Context) {
 		article.FavoritesCount = article.FavoritesCount - 1
 	}
 	c.JSON(200, gin.H{"article": article})
+}
+
+func listTags(c *gin.Context) {
+	tags := make([]string, 0)
+	if err := rwe.PGMain().ModelContext(c, (*ArticleTag)(nil)).
+		ColumnExpr("tag").
+		ColumnExpr("count(tag) as tag_count").
+		GroupExpr("tag").
+		OrderExpr("tag_count DESC").
+		WrapWith("tag_list").
+		TableExpr("tag_list").
+		ColumnExpr("tag").
+		Select(&tags); err != nil && err != pg.ErrNoRows {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(200, gin.H{"tags": tags})
 }
