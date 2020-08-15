@@ -14,4 +14,4 @@ test:
 	TZ= go test ./org
 	TZ= go test ./blog
 	TZ= go run cmd/api/*.go -env=dev &
-    APIURL=http://localhost:8888/api ./tests/run-api-tests.sh
+    	APIURL=http://localhost:8888/api ./tests/run-api-tests.sh
