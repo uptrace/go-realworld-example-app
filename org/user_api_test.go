@@ -9,7 +9,6 @@ import (
 	"github.com/uptrace/go-realworld-example-app/org"
 	"github.com/uptrace/go-realworld-example-app/rwe"
 	. "github.com/uptrace/go-realworld-example-app/testbed"
-	. "github.com/uptrace/go-realworld-example-app/testhelper"
 	"github.com/uptrace/go-realworld-example-app/xconfig"
 
 	. "github.com/onsi/ginkgo"

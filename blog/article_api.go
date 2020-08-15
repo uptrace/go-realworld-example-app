@@ -130,8 +130,8 @@ func createArticle(c *gin.Context) {
 
 	article.Slug = makeSlug(article.Title)
 	article.AuthorID = user.ID
-	article.CreatedAt = rwe.Clock.Now().UTC()
-	article.UpdatedAt = rwe.Clock.Now().UTC()
+	article.CreatedAt = rwe.Clock.Now()
+	article.UpdatedAt = rwe.Clock.Now()
 
 	if _, err := rwe.PGMain().
 		ModelContext(c, article).
@@ -172,7 +172,7 @@ func updateArticle(c *gin.Context) {
 		Set("title = ?", article.Title).
 		Set("description = ?", article.Description).
 		Set("body = ?", article.Body).
-		Set("updated_at = ?", rwe.Clock.Now().UTC()).
+		Set("updated_at = ?", rwe.Clock.Now()).
 		Where("slug = ?", c.Param("slug")).
 		Returning("*").
 		Update(); err != nil {
