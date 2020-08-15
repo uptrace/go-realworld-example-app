@@ -294,11 +294,9 @@ func unfavoriteArticle(c *gin.Context) {
 func listTags(c *gin.Context) {
 	tags := make([]string, 0)
 	if err := rwe.PGMain().ModelContext(c, (*ArticleTag)(nil)).
-		// ColumnExpr("distinct(tag)").
 		ColumnExpr("tag").
 		GroupExpr("tag").
 		OrderExpr("count(tag) DESC").
-		ColumnExpr("tag").
 		Select(&tags); err != nil && err != pg.ErrNoRows {
 		c.Error(err)
 		return
