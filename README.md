@@ -17,10 +17,10 @@ It implements JSON API as specified in [RealWorld](https://github.com/gothinkste
 
 Project consists of following packages:
 
-- [rwe](rwe) global package that parses configs, establishes DB connections etc.
-- [org](org) package that manages users and tokens.
-- [blog](blog) package that manages articles and comments.
-- [app](app) folder that contains application resources such as config.
+- [rwe](rwe) global package parses configs, establishes DB connections etc.
+- [org](org) package manages users and tokens.
+- [blog](blog) package manages articles and comments.
+- [app](app) folder contains application resources such as config.
 - [cmd/api](cmd/api) runs HTTP server with JSON API.
 - [cmd/migrate_db](cmd/migrate_db) command that runs SQL migrations.
 
