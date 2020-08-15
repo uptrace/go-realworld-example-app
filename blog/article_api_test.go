@@ -66,7 +66,7 @@ var _ = Describe("createArticle", func() {
 
 		helloArticleKeys = Keys{
 			"title":          Equal("Hello world"),
-			"slug":           HaveSuffix("-hello-world"),
+			"slug":           HavePrefix("hello-world-"),
 			"description":    Equal("Hello world article description!"),
 			"body":           Equal("Hello world article body."),
 			"author":         Equal(map[string]interface{}{"following": false, "username": "CurrentUser", "bio": "", "image": ""}),
@@ -84,7 +84,7 @@ var _ = Describe("createArticle", func() {
 
 		fooArticleKeys = Keys{
 			"title":          Equal("Foo bar"),
-			"slug":           HaveSuffix("-foo-bar"),
+			"slug":           HavePrefix("foo-bar-"),
 			"description":    Equal("Foo bar article description!"),
 			"body":           Equal("Foo bar article body."),
 			"author":         Equal(map[string]interface{}{"following": false, "username": "CurrentUser", "bio": "", "image": ""}),
@@ -228,7 +228,7 @@ var _ = Describe("createArticle", func() {
 
 		It("returns article", func() {
 			updatedArticleKeys := ExtendKeys(fooArticleKeys, Keys{
-				"slug":      HaveSuffix("-hello-world"),
+				"slug":      HavePrefix("hello-world-"),
 				"tagList":   Equal([]interface{}{}),
 				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339Nano)),
 			})

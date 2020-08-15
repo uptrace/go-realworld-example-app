@@ -15,7 +15,7 @@ import (
 )
 
 func makeSlug(title string) string {
-	return slug.Make(strconv.Itoa(rand.Int()) + " " + title)
+	return slug.Make(title) + "-" + strconv.Itoa(rand.Int())
 }
 
 func listArticles(c *gin.Context) {

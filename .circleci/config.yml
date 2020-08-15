@@ -1,4 +1,3 @@
-
 version: 2
 jobs:
   build:
@@ -26,7 +25,6 @@ jobs:
           name: wait for Redis
           command: dockerize -wait tcp://dbhost:6379 -timeout 2m
 
-
       - run:
           name: pre tests
           command: |
@@ -40,4 +38,5 @@ jobs:
       - run:
           name: tests
           command: |
+            make api_test
             make test
