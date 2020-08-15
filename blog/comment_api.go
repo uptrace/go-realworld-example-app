@@ -1,6 +1,7 @@
 package blog
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -82,16 +83,21 @@ func createComment(c *gin.Context) {
 		Comment *Comment `json:"comment"`
 	}
 
-	// Not return error on empty Comment
 	if err := c.BindJSON(&in); err != nil {
 		return
 	}
+
+	if in.Comment == nil {
+		c.Error(errors.New(`JSON field "comment" is required`))
+		return
+	}
+
 	comment := in.Comment
 
 	comment.AuthorID = user.ID
 	comment.ArticleID = article.ID
-	comment.CreatedAt = rwe.Clock.Now()
-	comment.UpdatedAt = rwe.Clock.Now()
+	comment.CreatedAt = rwe.Clock.Now().UTC()
+	comment.UpdatedAt = rwe.Clock.Now().UTC()
 
 	if _, err := rwe.PGMain().
 		ModelContext(c, comment).

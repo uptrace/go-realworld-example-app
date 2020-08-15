@@ -71,8 +71,8 @@ var _ = Describe("createArticle", func() {
 			"tagList":        ConsistOf([]interface{}{"greeting", "welcome", "salut"}),
 			"favoritesCount": Equal(float64(0)),
 			"favorited":      Equal(false),
-			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
-			"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
+			"createdAt":      Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
+			"updatedAt":      Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
 		}
 
 		favoritedArticleKeys = ExtendKeys(helloArticleKeys, Keys{
@@ -89,8 +89,8 @@ var _ = Describe("createArticle", func() {
 			"tagList":        ConsistOf([]interface{}{"foobar", "variable"}),
 			"favoritesCount": Equal(float64(0)),
 			"favorited":      Equal(false),
-			"createdAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
-			"updatedAt":      Equal(rwe.Clock.Now().Format(time.RFC3339)),
+			"createdAt":      Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
+			"updatedAt":      Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
 		}
 
 		user = &org.User{
@@ -228,7 +228,7 @@ var _ = Describe("createArticle", func() {
 			updatedArticleKeys := ExtendKeys(fooArticleKeys, Keys{
 				"slug":      HaveSuffix("-hello-world"),
 				"tagList":   Equal([]interface{}{}),
-				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
+				"updatedAt": Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
 			})
 			Expect(data["article"]).To(MatchAllKeys(updatedArticleKeys))
 		})
@@ -256,8 +256,8 @@ var _ = Describe("createArticle", func() {
 				"id":        Not(BeZero()),
 				"body":      Equal("First comment."),
 				"author":    Equal(map[string]interface{}{"following": false, "username": "FollowedUser", "bio": "", "image": ""}),
-				"createdAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
-				"updatedAt": Equal(rwe.Clock.Now().Format(time.RFC3339)),
+				"createdAt": Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
+				"updatedAt": Equal(rwe.Clock.Now().UTC().Format(time.RFC3339)),
 			}
 
 			followedUser = createFollowedUser()
@@ -326,6 +326,17 @@ var _ = Describe("createArticle", func() {
 			It("deletes comment", func() {
 				Expect(data).To(BeNil())
 			})
+		})
+	})
+
+	Describe("listTags", func() {
+		BeforeEach(func() {
+			resp := Get("/api/tags")
+			data = ParseJSON(resp, 200)
+		})
+
+		It("returns tags", func() {
+			Expect(data["tags"]).To(ConsistOf([]string{"salut", "salut", "greeting", "greeting", "welcome", "welcome"}))
 		})
 	})
 })
