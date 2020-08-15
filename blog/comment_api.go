@@ -96,8 +96,8 @@ func createComment(c *gin.Context) {
 
 	comment.AuthorID = user.ID
 	comment.ArticleID = article.ID
-	comment.CreatedAt = rwe.Clock.Now().UTC()
-	comment.UpdatedAt = rwe.Clock.Now().UTC()
+	comment.CreatedAt = rwe.Clock.Now()
+	comment.UpdatedAt = rwe.Clock.Now()
 
 	if _, err := rwe.PGMain().
 		ModelContext(c, comment).

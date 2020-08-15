@@ -11,7 +11,7 @@ db_migrate:
 	go run cmd/migrate_db/*.go
 
 test:
-	TZ= go test ./org
-	TZ= go test ./blog
 	TZ= go run cmd/api/*.go -env=dev &
 	APIURL=http://localhost:8888/api ./scripts/run-api-tests.sh
+	TZ= go test ./org
+	TZ= go test ./blog
