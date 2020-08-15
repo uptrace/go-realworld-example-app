@@ -93,7 +93,7 @@ func (f *ArticleFilter) query(q *orm.Query) (*orm.Query, error) {
 	return q, nil
 }
 
-var authorFollowingColumn = func(userID uint64) func(*orm.Query) (*orm.Query, error) {
+func authorFollowingColumn(userID uint64) func(*orm.Query) (*orm.Query, error) {
 	return func(q *orm.Query) (*orm.Query, error) {
 		if userID == 0 {
 			q = q.ColumnExpr("false AS author__following")

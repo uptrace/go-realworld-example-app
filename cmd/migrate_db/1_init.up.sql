@@ -66,7 +66,7 @@ CREATE TABLE comments (
   article_id int8 NOT NULL REFERENCES articles (id) ON DELETE CASCADE,
 
   body text NOT NULL,
-  
+
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
