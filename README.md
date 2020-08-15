@@ -1,7 +1,7 @@
 # Go Gin + go-pg realworld example application
 
 [![CircleCI](https://circleci.com/gh/uptrace/go-realworld-example-app.svg?style=svg)](https://circleci.com/gh/uptrace/go-realworld-example-app)
-[![PkgGoDev](https://pkg.go.dev/badge/uptrace/go-realworld-example-app)](https://pkg.go.dev/uptrace/go-realworld-example-app)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/uptrace/go-realworld-example-app)](https://pkg.go.dev/github.com/uptrace/go-realworld-example-app)
 
 ## Introduction
 
@@ -40,7 +40,7 @@ Project comes with a `Makefile` that contains following recipes:
 - `make test` runs unit tests.
 - `make api_test` runs API tests provided by RealWorld.
 
-After checking that tests are passing you can start API:
+After checking that tests are passing you can start API HTTP server:
 
 ```shell
 go run cmd/api/*.go -env=dev
