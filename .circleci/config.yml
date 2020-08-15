@@ -10,6 +10,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_DB: real_world_dev
           POSTGRES_HOST_AUTH_METHOD: trust
+          TZ: "UTC"
 
       - image: redis
 
