@@ -36,8 +36,6 @@ func UserMiddleware(c *gin.Context) {
 	}
 
 	c.Set("user", user)
-
-	return
 }
 
 func MustUserMiddleware(c *gin.Context) {

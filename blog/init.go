@@ -10,7 +10,7 @@ func init() {
 
 	g.Use(org.UserMiddleware)
 
-	g.GET("/tags", listTags)
+	g.GET("/tags/", listTags)
 	g.GET("/articles", listArticles)
 	g.GET("/articles/:slug", showArticle)
 	g.GET("/articles/:slug/comments", listArticleComments)
