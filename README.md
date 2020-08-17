@@ -38,7 +38,7 @@ Project comes with a `Makefile` that contains following recipes:
 
 - `make db_reset` drops existing database and creates a new one.
 - `make test` runs unit tests.
-- `make api_test` runs API tests provided by RealWorld.
+- `make api_test` runs API tests provided by [RealWorld](https://github.com/gothinkster/realworld/tree/master/api).
 
 After checking that tests are passing you can start API HTTP server:
 
