@@ -333,7 +333,7 @@ var _ = Describe("createArticle", func() {
 
 	Describe("listTags", func() {
 		BeforeEach(func() {
-			resp := Get("/api/tags")
+			resp := Get("/api/tags/")
 			data = ParseJSON(resp, 200)
 		})
 

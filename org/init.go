@@ -15,10 +15,9 @@ func init() {
 
 	g.Use(MustUserMiddleware)
 
-	g.GET("/user", currentUser)
-	g.PUT("/user", updateUser)
+	g.GET("/user/", currentUser)
+	g.PUT("/user/", updateUser)
 
 	g.POST("/profiles/:username/follow", followUser)
 	g.DELETE("/profiles/:username/follow", unfollowUser)
-
 }

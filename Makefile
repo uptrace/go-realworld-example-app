@@ -16,4 +16,4 @@ test:
 
 api_test:
 	TZ= go run cmd/api/*.go -env=dev &
-	APIURL=http://localhost:8888/api ./scripts/run-api-tests.sh
+	APIURL=http://localhost:8000/api ./scripts/run-api-tests.sh

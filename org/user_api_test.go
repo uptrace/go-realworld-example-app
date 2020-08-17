@@ -80,7 +80,7 @@ var _ = Describe("createUser", func() {
 
 		Describe("currentUser", func() {
 			BeforeEach(func() {
-				resp := GetWithToken("/api/user", user.ID)
+				resp := GetWithToken("/api/user/", user.ID)
 				data = ParseJSON(resp, http.StatusOK)
 			})
 
@@ -92,7 +92,7 @@ var _ = Describe("createUser", func() {
 		Describe("updateUser", func() {
 			BeforeEach(func() {
 				json := `{"user": {"username": "hello","email": "foo@bar.com", "image": "bar", "bio": "foo"}}`
-				resp := PutWithToken("/api/user", json, user.ID)
+				resp := PutWithToken("/api/user/", json, user.ID)
 				data = ParseJSON(resp, http.StatusOK)
 			})
 

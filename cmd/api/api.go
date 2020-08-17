@@ -16,7 +16,7 @@ import (
 	"github.com/uptrace/go-realworld-example-app/xconfig"
 )
 
-var listenFlag = flag.String("listen", ":8888", "listen address")
+var listenFlag = flag.String("listen", ":8000", "listen address")
 
 func main() {
 	flag.Parse()
