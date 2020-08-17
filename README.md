@@ -23,6 +23,7 @@ Project consists of following packages:
 - [app](app) folder contains application resources such as config.
 - [cmd/api](cmd/api) runs HTTP server with JSON API.
 - [cmd/migrate_db](cmd/migrate_db) command that runs SQL migrations.
+- [scripts](scripts) test scripts are copied from [Real World API specs](https://github.com/gothinkster/realworld/tree/master/api).
 
 The most interesting part for go-pg users is probably [article filter](blog/article_filter.go).
 
