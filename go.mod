@@ -16,7 +16,10 @@ require (
 	github.com/onsi/ginkgo v1.10.1
 	github.com/onsi/gomega v1.7.0
 	github.com/sirupsen/logrus v1.6.0
+	github.com/uptrace/uptrace-go v0.1.1
 	github.com/vmihailenco/treemux v0.0.0-20200503111519-09918bc46285 // indirect
+	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin v0.10.1
+	go.opentelemetry.io/otel v0.10.0
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 	golang.org/x/exp v0.0.0-20190121172915-509febef88a4
 	gopkg.in/yaml.v2 v2.3.0

@@ -53,7 +53,7 @@ func createUser(c *gin.Context) {
 	}
 
 	if _, err = rwe.PGMain().
-		ModelContext(c, user).
+		ModelContext(c.Request.Context(), user).
 		Insert(); err != nil {
 		c.Error(err)
 		return

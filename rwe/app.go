@@ -52,6 +52,7 @@ func Init(ctx context.Context, cfg *xconfig.Config) context.Context {
 	Ctx = ctx
 
 	callOnInit(ctx)
+	setupOtel(ctx)
 
 	return ctx
 }
