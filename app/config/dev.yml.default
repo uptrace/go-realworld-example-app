@@ -4,6 +4,3 @@ pg_main:
   addr: ":5432"
   user: "postgres"
   database: "real_world_dev"
-
-uptrace:
-  dsn: "https://Cpitatajc8tZaOHFDzErYoBr-xw19Vvr@api.uptrace.dev/8"
