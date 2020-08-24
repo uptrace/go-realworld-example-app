@@ -19,6 +19,8 @@ func makeSlug(title string) string {
 }
 
 func listArticles(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	f, err := decodeArticleFilter(c)
 	if err != nil {
 		c.Error(err)
@@ -26,7 +28,7 @@ func listArticles(c *gin.Context) {
 	}
 
 	articles := make([]*Article, 0)
-	if err := rwe.PGMain().ModelContext(c, &articles).
+	if err := rwe.PGMain().ModelContext(ctx, &articles).
 		ColumnExpr("?TableColumns").
 		Apply(f.query).
 		Limit(f.Pager.GetLimit()).
@@ -60,6 +62,8 @@ func showArticle(c *gin.Context) {
 }
 
 func selectArticleByFilter(c *gin.Context) (*Article, error) {
+	ctx := c.Request.Context()
+
 	f, err := decodeArticleFilter(c)
 	if err != nil {
 		return nil, err
@@ -67,7 +71,7 @@ func selectArticleByFilter(c *gin.Context) (*Article, error) {
 
 	article := new(Article)
 	if err := rwe.PGMain().
-		ModelContext(c, article).
+		ModelContext(ctx, article).
 		ColumnExpr("?TableColumns").
 		Apply(f.query).
 		Select(); err != nil {
@@ -82,6 +86,8 @@ func selectArticleByFilter(c *gin.Context) (*Article, error) {
 }
 
 func listArticlesFeed(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	e, ok := c.Get("authErr")
 	if ok {
 		c.AbortWithError(http.StatusUnauthorized, e.(error))
@@ -96,7 +102,7 @@ func listArticlesFeed(c *gin.Context) {
 
 	articles := make([]*Article, 0)
 	if err := rwe.PGMain().
-		ModelContext(c, &articles).
+		ModelContext(ctx, &articles).
 		ColumnExpr("?TableColumns").
 		Apply(f.query).
 		Select(); err != nil {
@@ -111,6 +117,8 @@ func listArticlesFeed(c *gin.Context) {
 }
 
 func createArticle(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	user := c.MustGet("user").(*org.User)
 
 	var in struct {
@@ -134,7 +142,7 @@ func createArticle(c *gin.Context) {
 	article.UpdatedAt = rwe.Clock.Now()
 
 	if _, err := rwe.PGMain().
-		ModelContext(c, article).
+		ModelContext(ctx, article).
 		Insert(); err != nil {
 		c.Error(err)
 		return
@@ -150,6 +158,8 @@ func createArticle(c *gin.Context) {
 }
 
 func updateArticle(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	user := c.MustGet("user").(*org.User)
 
 	var in struct {
@@ -168,7 +178,7 @@ func updateArticle(c *gin.Context) {
 	article := in.Article
 
 	if _, err := rwe.PGMain().
-		ModelContext(c, article).
+		ModelContext(ctx, article).
 		Set("title = ?", article.Title).
 		Set("description = ?", article.Description).
 		Set("body = ?", article.Body).
@@ -180,7 +190,7 @@ func updateArticle(c *gin.Context) {
 		return
 	}
 
-	if _, err := rwe.PGMain().ModelContext(c, (*ArticleTag)(nil)).
+	if _, err := rwe.PGMain().ModelContext(ctx, (*ArticleTag)(nil)).
 		Where("article_id = ?", article.ID).
 		Delete(); err != nil {
 		c.Error(err)
@@ -201,10 +211,12 @@ func updateArticle(c *gin.Context) {
 }
 
 func deleteArticle(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	user := c.MustGet("user").(*org.User)
 
 	if _, err := rwe.PGMain().
-		ModelContext(c, (*Article)(nil)).
+		ModelContext(ctx, (*Article)(nil)).
 		Where("author_id = ?", user.ID).
 		Where("slug = ?", c.Param("slug")).
 		Delete(); err != nil {
@@ -216,6 +228,8 @@ func deleteArticle(c *gin.Context) {
 }
 
 func createTags(c *gin.Context, article *Article) error {
+	ctx := c.Request.Context()
+
 	if len(article.TagList) == 0 {
 		return nil
 	}
@@ -229,7 +243,7 @@ func createTags(c *gin.Context, article *Article) error {
 	}
 
 	if _, err := rwe.PGMain().
-		ModelContext(c, &tags).
+		ModelContext(ctx, &tags).
 		Insert(); err != nil {
 		return err
 	}
@@ -238,6 +252,8 @@ func createTags(c *gin.Context, article *Article) error {
 }
 
 func favoriteArticle(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	user := c.MustGet("user").(*org.User)
 
 	article, err := selectArticleByFilter(c)
@@ -251,7 +267,7 @@ func favoriteArticle(c *gin.Context) {
 		ArticleID: article.ID,
 	}
 	res, err := rwe.PGMain().
-		ModelContext(c, favoriteArticle).
+		ModelContext(ctx, favoriteArticle).
 		Insert()
 	if err != nil {
 		c.Error(err)
@@ -266,6 +282,8 @@ func favoriteArticle(c *gin.Context) {
 }
 
 func unfavoriteArticle(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	user := c.MustGet("user").(*org.User)
 
 	article, err := selectArticleByFilter(c)
@@ -275,7 +293,7 @@ func unfavoriteArticle(c *gin.Context) {
 	}
 
 	res, err := rwe.PGMain().
-		ModelContext(c, (*FavoriteArticle)(nil)).
+		ModelContext(ctx, (*FavoriteArticle)(nil)).
 		Where("user_id = ?", user.ID).
 		Where("article_id = ?", article.ID).
 		Delete()
@@ -292,8 +310,10 @@ func unfavoriteArticle(c *gin.Context) {
 }
 
 func listTags(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	tags := make([]string, 0)
-	if err := rwe.PGMain().ModelContext(c, (*ArticleTag)(nil)).
+	if err := rwe.PGMain().ModelContext(ctx, (*ArticleTag)(nil)).
 		ColumnExpr("tag").
 		GroupExpr("tag").
 		OrderExpr("count(tag) DESC").

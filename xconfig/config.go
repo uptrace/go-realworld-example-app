@@ -23,7 +23,7 @@ type Config struct {
 
 	Uptrace struct {
 		DSN string `yaml:"dsn"`
-	}
+	} `yaml:"uptrace"`
 
 	SecretKey string `yaml:"secret_key"`
 }

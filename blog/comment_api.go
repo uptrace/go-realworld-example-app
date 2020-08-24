@@ -10,7 +10,9 @@ import (
 )
 
 func listArticleComments(c *gin.Context) {
-	article, err := SelectArticle(c, c.Param("slug"))
+	ctx := c.Request.Context()
+
+	article, err := SelectArticle(ctx, c.Param("slug"))
 	if err != nil {
 		c.Error(err)
 		return
@@ -23,7 +25,7 @@ func listArticleComments(c *gin.Context) {
 	}
 
 	articles := make([]*Comment, 0)
-	if err := rwe.PGMain().ModelContext(c, &articles).
+	if err := rwe.PGMain().ModelContext(ctx, &articles).
 		ColumnExpr("c.*").
 		Relation("Author").
 		Apply(authorFollowingColumn(userID)).
@@ -37,7 +39,9 @@ func listArticleComments(c *gin.Context) {
 }
 
 func showComment(c *gin.Context) {
-	article, err := SelectArticle(c, c.Param("slug"))
+	ctx := c.Request.Context()
+
+	article, err := SelectArticle(ctx, c.Param("slug"))
 	if err != nil {
 		c.Error(err)
 		return
@@ -56,7 +60,7 @@ func showComment(c *gin.Context) {
 	}
 
 	comment := new(Comment)
-	if err := rwe.PGMain().ModelContext(c, comment).
+	if err := rwe.PGMain().ModelContext(ctx, comment).
 		ColumnExpr("c.*").
 		Relation("Author").
 		Apply(authorFollowingColumn(userID)).
@@ -71,9 +75,11 @@ func showComment(c *gin.Context) {
 }
 
 func createComment(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	user := c.MustGet("user").(*org.User)
 
-	article, err := SelectArticle(c, c.Param("slug"))
+	article, err := SelectArticle(ctx, c.Param("slug"))
 	if err != nil {
 		c.Error(err)
 		return
@@ -100,7 +106,7 @@ func createComment(c *gin.Context) {
 	comment.UpdatedAt = rwe.Clock.Now()
 
 	if _, err := rwe.PGMain().
-		ModelContext(c, comment).
+		ModelContext(ctx, comment).
 		Insert(); err != nil {
 		c.Error(err)
 		return
@@ -111,16 +117,18 @@ func createComment(c *gin.Context) {
 }
 
 func deleteComment(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	user := c.MustGet("user").(*org.User)
 
-	article, err := SelectArticle(c, c.Param("slug"))
+	article, err := SelectArticle(ctx, c.Param("slug"))
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
 	if _, err := rwe.PGMain().
-		ModelContext(c, (*Comment)(nil)).
+		ModelContext(ctx, (*Comment)(nil)).
 		Where("author_id = ?", user.ID).
 		Where("article_id = ?", article.ID).
 		Delete(); err != nil {

@@ -30,6 +30,8 @@ func currentUser(c *gin.Context) {
 }
 
 func createUser(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var in struct {
 		User *User `json:"user"`
 	}
@@ -53,7 +55,7 @@ func createUser(c *gin.Context) {
 	}
 
 	if _, err = rwe.PGMain().
-		ModelContext(c, user).
+		ModelContext(ctx, user).
 		Insert(); err != nil {
 		c.Error(err)
 		return
@@ -77,6 +79,8 @@ func hashPassword(pass string) (string, error) {
 }
 
 func loginUser(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var in struct {
 		User *struct {
 			Email    string `json:"email"`
@@ -94,7 +98,7 @@ func loginUser(c *gin.Context) {
 
 	user := new(User)
 	if err := rwe.PGMain().
-		ModelContext(c.Request.Context(), user).
+		ModelContext(ctx, user).
 		Where("email = ?", in.User.Email).
 		Select(); err != nil {
 		if err == pg.ErrNoRows {
@@ -128,6 +132,8 @@ func comparePasswords(hash, pass string) error {
 }
 
 func updateUser(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	var in struct {
 		User *User `json:"user"`
 	}
@@ -152,7 +158,7 @@ func updateUser(c *gin.Context) {
 
 	authUser := c.MustGet("user").(*User)
 	if _, err = rwe.PGMain().
-		ModelContext(c, authUser).
+		ModelContext(ctx, authUser).
 		Set("email = ?", user.Email).
 		Set("username = ?", user.Username).
 		Set("password_hash = ?", user.PasswordHash).
@@ -170,6 +176,8 @@ func updateUser(c *gin.Context) {
 }
 
 func showProfile(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	followingColumn := func(q *orm.Query) (*orm.Query, error) {
 		u, _ := c.Get("user")
 		authUser, ok := u.(*User)
@@ -189,7 +197,7 @@ func showProfile(c *gin.Context) {
 
 	user := new(User)
 	if err := rwe.PGMain().
-		ModelContext(c, user).
+		ModelContext(ctx, user).
 		ColumnExpr("u.*").
 		Apply(followingColumn).
 		Where("username = ?", c.Param("username")).
@@ -202,9 +210,11 @@ func showProfile(c *gin.Context) {
 }
 
 func followUser(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	authUser := c.MustGet("user").(*User)
 
-	user, err := SelectUserByUsername(c, c.Param("username"))
+	user, err := SelectUserByUsername(ctx, c.Param("username"))
 	if err != nil {
 		c.Error(err)
 		return
@@ -215,7 +225,7 @@ func followUser(c *gin.Context) {
 		FollowedUserID: user.ID,
 	}
 	if _, err := rwe.PGMain().
-		ModelContext(c, followUser).
+		ModelContext(ctx, followUser).
 		Insert(); err != nil {
 		c.Error(err)
 		return
@@ -226,16 +236,18 @@ func followUser(c *gin.Context) {
 }
 
 func unfollowUser(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	authUser := c.MustGet("user").(*User)
 
-	user, err := SelectUserByUsername(c, c.Param("username"))
+	user, err := SelectUserByUsername(ctx, c.Param("username"))
 	if err != nil {
 		c.Error(err)
 		return
 	}
 
 	if _, err := rwe.PGMain().
-		ModelContext(c, (*FollowUser)(nil)).
+		ModelContext(ctx, (*FollowUser)(nil)).
 		Where("user_id = ?", authUser.ID).
 		Where("followed_user_id = ?", user.ID).
 		Delete(); err != nil {

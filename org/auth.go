@@ -16,6 +16,8 @@ func authToken(req *http.Request) string {
 }
 
 func UserMiddleware(c *gin.Context) {
+	ctx := c.Request.Context()
+
 	token := authToken(c.Request)
 	userID, err := decodeUserToken(token)
 	if err != nil {
@@ -23,7 +25,7 @@ func UserMiddleware(c *gin.Context) {
 		return
 	}
 
-	user, err := SelectUser(c, userID)
+	user, err := SelectUser(ctx, userID)
 	if err != nil {
 		c.Set("authErr", err)
 		return

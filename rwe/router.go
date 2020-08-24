@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	gintrace "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin"
 )
 
 var (
@@ -15,6 +16,7 @@ func init() {
 	Router = gin.Default()
 	Router.Use(corsMiddleware)
 	Router.Use(errorMiddleware)
+	Router.Use(gintrace.Middleware("rwe"))
 
 	API = Router.Group("/api")
 }
