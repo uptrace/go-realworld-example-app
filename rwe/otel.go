@@ -3,7 +3,6 @@ package rwe
 import (
 	"context"
 	"os"
-	"sync"
 
 	"github.com/sirupsen/logrus"
 	"github.com/uptrace/uptrace-go/uptrace"
@@ -11,10 +10,8 @@ import (
 )
 
 var (
-	upclientOnce sync.Once
-	upclient     *uptrace.Client
-
-	Tracer trace.Tracer
+	upclient *uptrace.Client
+	Tracer   trace.Tracer
 )
 
 func setupOtel(ctx context.Context) {
