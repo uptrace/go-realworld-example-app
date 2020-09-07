@@ -1,9 +1,12 @@
 package rwe
 
 import (
+	"errors"
+	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis_rate/v9"
 	gintrace "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin"
 )
 
@@ -16,6 +19,7 @@ func init() {
 	Router = gin.Default()
 	Router.Use(corsMiddleware)
 	Router.Use(errorMiddleware)
+	Router.Use(rateLimitMiddleware)
 	Router.Use(gintrace.Middleware("rwe"))
 
 	API = Router.Group("/api")
@@ -55,4 +59,29 @@ func corsMiddleware(c *gin.Context) {
 
 	h := c.Writer.Header()
 	h.Set("Access-Control-Allow-Origin", origin)
+}
+
+func rateLimitMiddleware(c *gin.Context) {
+	if c.Request.Method == http.MethodOptions {
+		return
+	}
+
+	host, _, err := net.SplitHostPort(c.Request.RemoteAddr)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	rateKey := "rl:" + host
+	limit := redis_rate.PerMinute(100)
+
+	res, err := RateLimiter().Allow(c.Request.Context(), rateKey, limit)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	if res.Allowed == 0 {
+		c.AbortWithError(http.StatusTooManyRequests, errors.New("rate limited"))
+		return
+	}
 }

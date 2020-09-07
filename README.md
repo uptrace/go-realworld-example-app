@@ -3,14 +3,17 @@
 [![CircleCI](https://circleci.com/gh/uptrace/go-realworld-example-app.svg?style=svg)](https://circleci.com/gh/uptrace/go-realworld-example-app)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/uptrace/go-realworld-example-app)](https://pkg.go.dev/github.com/uptrace/go-realworld-example-app)
 
+> :heart: [**Uptrace.dev** - distributed traces, logs, and errors in one place](https://uptrace.dev)
+
 ## Introduction
 
 This project was created to demonstrate how to use
 [Gin Web framework](https://github.com/gin-gonic/gin) with:
 
 - [go-pg PostgreSQL client and ORM](https://github.com/go-pg/pg).
+- [Rate limiting using Redis](https://github.com/go-redis/redis_rate).
 - [go-pg/migrations](https://github.com/go-pg/migrations).
-- [uptrace-go tracing](https://github.com/uptrace/uptrace-go).
+- [tracing using uptrace-go](https://github.com/uptrace/uptrace-go).
 
 It implements JSON API as specified in [RealWorld](https://github.com/gothinkster/realworld) spec.
 

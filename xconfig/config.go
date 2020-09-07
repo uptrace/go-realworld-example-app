@@ -19,7 +19,8 @@ type Config struct {
 	Service string
 	Env     string
 
-	PGMain *Postgres `yaml:"pg_main"`
+	RedisCache *RedisRing `yaml:"redis_cache"`
+	PGMain     *Postgres  `yaml:"pg_main"`
 
 	Uptrace struct {
 		DSN string `yaml:"dsn"`
