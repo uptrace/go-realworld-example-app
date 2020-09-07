@@ -11,6 +11,7 @@ This project was created to demonstrate how to use
 [Gin Web framework](https://github.com/gin-gonic/gin) with:
 
 - [go-pg PostgreSQL client and ORM](https://github.com/go-pg/pg).
+- [Caching using Redis](https://github.com/go-redis/cache).
 - [Rate limiting using Redis](https://github.com/go-redis/redis_rate).
 - [go-pg/migrations](https://github.com/go-pg/migrations).
 - [tracing using uptrace-go](https://github.com/uptrace/uptrace-go).
