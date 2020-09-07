@@ -12,7 +12,7 @@ type Comment struct {
 	ID   uint64 `json:"id"`
 	Body string `json:"body"`
 
-	Author   *org.Profile `json:"author"`
+	Author   *org.Profile `json:"author" pg:"rel:has-one"`
 	AuthorID uint64       `json:"-"`
 
 	ArticleID uint64 `json:"-"`
