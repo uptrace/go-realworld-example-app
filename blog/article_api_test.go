@@ -23,12 +23,14 @@ func TestGinkgo(t *testing.T) {
 	RunSpecs(t, "blog")
 }
 
+var ctx context.Context
+
 func init() {
 	mock := clock.NewMock()
 	mock.Set(time.Date(2020, time.January, 1, 2, 3, 4, 5000, time.UTC))
 	rwe.Clock = mock
 
-	ctx := context.Background()
+	ctx = context.Background()
 
 	cfg, err := xconfig.LoadConfig("test")
 	if err != nil {
@@ -62,7 +64,7 @@ var _ = Describe("createArticle", func() {
 	}
 
 	BeforeEach(func() {
-		TruncateDB()
+		ResetAll(ctx)
 
 		helloArticleKeys = Keys{
 			"title":          Equal("Hello world"),

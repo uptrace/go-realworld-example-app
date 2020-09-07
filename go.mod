@@ -10,6 +10,7 @@ require (
 	github.com/go-pg/pg/v10 v10.0.0-beta.17
 	github.com/go-pg/pgext v0.1.0
 	github.com/go-pg/urlstruct v0.5.0
+	github.com/go-redis/cache/v8 v8.0.0-beta.14
 	github.com/go-redis/redis/v8 v8.0.0-beta.10
 	github.com/go-redis/redis_rate/v9 v9.0.1
 	github.com/go-redis/redisext v0.1.4
@@ -18,6 +19,7 @@ require (
 	github.com/onsi/gomega v1.10.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/uptrace/uptrace-go v0.1.2
+	github.com/vmihailenco/go-tinylfu v0.0.0-20200714092347-120b932f0a08
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin v0.11.0
 	go.opentelemetry.io/otel v0.11.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a

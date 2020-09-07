@@ -2,7 +2,10 @@ package org
 
 import (
 	"context"
+	"fmt"
+	"time"
 
+	"github.com/go-redis/cache/v8"
 	"github.com/uptrace/go-realworld-example-app/rwe"
 )
 
@@ -47,7 +50,23 @@ func NewProfile(user *User) *Profile {
 	}
 }
 
-func SelectUser(ctx context.Context, id uint64) (*User, error) {
+func SelectUser(ctx context.Context, userID uint64) (*User, error) {
+	user := new(User)
+	if err := rwe.RedisCache().Once(&cache.Item{
+		Ctx:   ctx,
+		Key:   fmt.Sprintf("user:%d", userID),
+		Value: user,
+		TTL:   15 * time.Minute,
+		Do: func(item *cache.Item) (interface{}, error) {
+			return selectUser(ctx, userID)
+		},
+	}); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func selectUser(ctx context.Context, id uint64) (*User, error) {
 	user := new(User)
 	if err := rwe.PGMain().
 		ModelContext(ctx, user).
@@ -55,7 +74,6 @@ func SelectUser(ctx context.Context, id uint64) (*User, error) {
 		Select(); err != nil {
 		return nil, err
 	}
-
 	return user, nil
 }
 

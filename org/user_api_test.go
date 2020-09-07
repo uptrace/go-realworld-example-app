@@ -21,8 +21,10 @@ func TestOrg(t *testing.T) {
 	RunSpecs(t, "org")
 }
 
+var ctx context.Context
+
 func init() {
-	ctx := context.Background()
+	ctx = context.Background()
 
 	cfg, err := xconfig.LoadConfig("test")
 	if err != nil {
@@ -38,7 +40,7 @@ var _ = Describe("createUser", func() {
 	var userKeys Keys
 
 	BeforeEach(func() {
-		TruncateDB()
+		ResetAll(ctx)
 
 		userKeys = Keys{
 			"username":  Equal("wangzitian0"),
