@@ -14,7 +14,7 @@ This project was created to demonstrate how to use
 - [Caching using Redis](https://github.com/go-redis/cache).
 - [Rate limiting using Redis](https://github.com/go-redis/redis_rate).
 - [go-pg/migrations](https://github.com/go-pg/migrations).
-- [tracing using uptrace-go](https://github.com/uptrace/uptrace-go).
+- [Tracing using uptrace-go](https://github.com/uptrace/uptrace-go).
 
 It implements JSON API as specified in [RealWorld](https://github.com/gothinkster/realworld) spec.
 
