@@ -23,6 +23,6 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin v0.11.0
 	go.opentelemetry.io/otel v0.11.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
-	golang.org/x/exp v0.0.0-20200901203048-c4f52b2c50aa
+	golang.org/x/exp v0.0.0-20201008143054-e3b2a7f2fdc7
 	gopkg.in/yaml.v2 v2.3.0
 )
