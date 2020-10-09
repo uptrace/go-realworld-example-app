@@ -9,7 +9,7 @@ require (
 	github.com/go-pg/migrations/v8 v8.0.0-beta.1
 	github.com/go-pg/pg/v10 v10.0.0-beta.17
 	github.com/go-pg/pgext v0.1.0
-	github.com/go-pg/urlstruct v0.5.0
+	github.com/go-pg/urlstruct v0.6.0
 	github.com/go-redis/cache/v8 v8.0.0-beta.14
 	github.com/go-redis/redis/v8 v8.0.0-beta.10
 	github.com/go-redis/redis_rate/v9 v9.0.1
