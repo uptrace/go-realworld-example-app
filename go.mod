@@ -22,7 +22,7 @@ require (
 	github.com/vmihailenco/go-tinylfu v0.0.0-20200714092347-120b932f0a08
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin v0.11.0
 	go.opentelemetry.io/otel v0.11.0
-	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
+	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	golang.org/x/exp v0.0.0-20200901203048-c4f52b2c50aa
 	gopkg.in/yaml.v2 v2.3.0
 )
