@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis_rate/v9"
-	gintrace "go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 var (
@@ -20,7 +20,7 @@ func init() {
 	Router.Use(corsMiddleware)
 	Router.Use(errorMiddleware)
 	Router.Use(rateLimitMiddleware)
-	Router.Use(gintrace.Middleware("rwe"))
+	Router.Use(otelgin.Middleware("rwe"))
 
 	API = Router.Group("/api")
 }
