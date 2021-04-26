@@ -29,7 +29,7 @@ require (
 	github.com/uptrace/uptrace-go v0.4.2
 	github.com/vmihailenco/msgpack/v5 v5.0.0-rc.2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.13.0
-	go.opentelemetry.io/otel v0.13.0
+	go.opentelemetry.io/otel v0.20.0
 	go.opentelemetry.io/otel/sdk v0.13.0
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 	golang.org/x/exp v0.0.0-20201008143054-e3b2a7f2fdc7
