@@ -6,7 +6,7 @@ require (
 	github.com/benbjohnson/clock v1.0.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.6.3
-	github.com/go-pg/migrations/v8 v8.0.1
+	github.com/go-pg/migrations/v8 v8.1.0
 	github.com/go-pg/pg/v10 v10.6.2
 	github.com/go-pg/pgext v0.2.0
 	github.com/go-pg/urlstruct v1.0.0
