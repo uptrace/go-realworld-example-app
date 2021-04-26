@@ -24,7 +24,7 @@ require (
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.3
 	github.com/segmentio/encoding v0.2.2 // indirect
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/ugorji/go v1.1.13 // indirect
 	github.com/uptrace/uptrace-go v0.4.2
 	github.com/vmihailenco/msgpack/v5 v5.0.0-rc.2 // indirect
