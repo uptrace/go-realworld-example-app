@@ -11,7 +11,7 @@ require (
 	github.com/go-pg/pgext v0.2.0
 	github.com/go-pg/urlstruct v1.0.0
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
-	github.com/go-redis/cache/v8 v8.2.1
+	github.com/go-redis/cache/v8 v8.4.1
 	github.com/go-redis/redis/v8 v8.3.3
 	github.com/go-redis/redis_rate/v9 v9.0.2
 	github.com/go-redis/redisext v0.3.1
