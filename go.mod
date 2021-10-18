@@ -26,7 +26,7 @@ require (
 	github.com/segmentio/encoding v0.2.2 // indirect
 	github.com/sirupsen/logrus v1.7.0
 	github.com/ugorji/go v1.1.13 // indirect
-	github.com/uptrace/uptrace-go v0.4.2
+	github.com/uptrace/uptrace-go v0.21.1
 	github.com/vmihailenco/msgpack/v5 v5.0.0-rc.2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.13.0
 	go.opentelemetry.io/otel v0.13.0
