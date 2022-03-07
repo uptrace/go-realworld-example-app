@@ -3,7 +3,7 @@ module github.com/uptrace/go-realworld-example-app
 go 1.15
 
 require (
-	github.com/benbjohnson/clock v1.0.3
+	github.com/benbjohnson/clock v1.3.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-pg/migrations/v8 v8.0.1
