@@ -16,7 +16,7 @@ require (
 	github.com/go-redis/redis_rate/v9 v9.0.2
 	github.com/go-redis/redisext v0.3.1
 	github.com/google/uuid v1.1.2 // indirect
-	github.com/gosimple/slug v1.9.0
+	github.com/gosimple/slug v1.14.0
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/klauspost/compress v1.11.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
