@@ -28,7 +28,7 @@ require (
 	github.com/ugorji/go v1.1.13 // indirect
 	github.com/uptrace/uptrace-go v0.4.2
 	github.com/vmihailenco/msgpack/v5 v5.0.0-rc.2 // indirect
-	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.13.0
+	go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin v0.44.0
 	go.opentelemetry.io/otel v0.13.0
 	go.opentelemetry.io/otel/sdk v0.13.0
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
